@@ -20,6 +20,7 @@ router.use((request, response, next) => {
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Expose-Headers': 'Origin, Accept, Content-Location, Location, X-Requested-With',
+    'Access-Control-Allow-Private-Network': 'http://sandbox.cds-hooks.org/',
     'Content-Type': 'application/json; charset=utf-8',
   });
   next();

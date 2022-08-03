@@ -7,6 +7,14 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 var cors = require('cors');
+const fs = require('fs');
+
+var key = fs.readFileSync(__dirname + '/certs/selfsigned.key');
+var cert = fs.readFileSync(__dirname + '/certs/selfsigned.crt');
+var options = {
+  key: key,
+  cert: cert
+};
 
 const index = require('./routes/index');
 const apiLibrary = require('./routes/api/library');
@@ -57,4 +65,7 @@ app.use((err, req, res, next) => {
   res.render('error');
 });
 
-module.exports = app;
+module.exports = {
+  app: app,
+  options: options
+};

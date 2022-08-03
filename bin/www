@@ -4,15 +4,18 @@
 
 /* eslint-disable no-console */
 
-const app = require('../app');
+const appExport = require('../app');
 const debug = require('debug')('cql-exec-service:server');
 const libsLoader = require('../lib/libraries-loader');
 const hooksLoader = require('../lib/hooks-loader');
 const csLoader = require('../lib/code-service-loader');
 const mkdirp = require('mkdirp');
-const http = require('http');
+const https = require('https');
 const path = require('path');
 const fs = require('fs');
+
+const app = appExport.app;
+const options = appExport.options;
 
 /**
  * Check for CDS-specific configuration settings and set in app.locals if applicable
@@ -48,7 +51,7 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-const server = http.createServer(app);
+const server = https.createServer(options, app);
 
 /**
  * Listen on provided port, on all network interfaces.
