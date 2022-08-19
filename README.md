@@ -207,7 +207,9 @@ To run the server, simply invoke `yarn start`.
 $ yarn start
 ```
 
-_**NOTE**: This service operates on HTTP only.  This means that information between the client and the server is **not** encrypted.  Under this configuration, calls to the CQL Services that contain real patient data should originate from the same host and avoid going over the network._
+_**NOTE**: By default, this service runs on HTTP.  This means that information between the client and the server is **not** encrypted.  Under this configuration, calls to the CQL Services that contain real patient data should originate from the same host and avoid going over the network._
+
+_This service can be configured to run on HTTPS. To do so, you must change the `HTTPS` variable in `app.js` to `true`, and upload a self-signed certificate to the `certs` folder. See https://flaviocopes.com/express-https-self-signed-certificate/ for instructions on how to generate your own self-signed certificate file and certificate key. Note that you will need to name your respective files `selfsigned.crt` and `selfsigned.key`. Once generated, replace your own certificate files with the ones in the `certs` folder._
 
 ## CQL Services for Docker
 

@@ -9,12 +9,8 @@ const helmet = require('helmet');
 var cors = require('cors');
 const fs = require('fs');
 
-var key = fs.readFileSync(__dirname + '/certs/selfsigned.key');
-var cert = fs.readFileSync(__dirname + '/certs/selfsigned.crt');
-var options = {
-  key: key,
-  cert: cert
-};
+// Change to true to operate on HTTPS
+const HTTPS = false;
 
 const index = require('./routes/index');
 const apiLibrary = require('./routes/api/library');
@@ -64,6 +60,22 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500);
   res.render('error');
 });
+
+// Read self-signed certificates for running on HTTPS
+if (HTTPS) {
+  try {
+    var key = fs.readFileSync(__dirname + '/certs/selfsigned.key');
+    var cert = fs.readFileSync(__dirname + '/certs/selfsigned.crt');
+    var options = {
+      key: key,
+      cert: cert
+    };
+  } catch (err) {
+    console.error('Unable to read selfsigned.crt or selfsigned.key file');
+  }
+} else {
+  options = null;
+}
 
 module.exports = {
   app: app,

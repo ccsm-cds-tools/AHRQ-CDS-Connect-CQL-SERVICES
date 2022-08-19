@@ -10,6 +10,7 @@ const libsLoader = require('../lib/libraries-loader');
 const hooksLoader = require('../lib/hooks-loader');
 const csLoader = require('../lib/code-service-loader');
 const mkdirp = require('mkdirp');
+const http = require('http');
 const https = require('https');
 const path = require('path');
 const fs = require('fs');
@@ -48,10 +49,12 @@ const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 /**
- * Create HTTP server.
+ * Create HTTPS or HTTP server.
  */
 
-const server = https.createServer(options, app);
+const server = options
+  ? https.createServer(options, app)
+  : http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
