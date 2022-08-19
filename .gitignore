@@ -35,3 +35,6 @@ npm-debug.log
 
 # vscode config
 .vscode
+
+# Directory for placing self-signed certificates
+/certs
