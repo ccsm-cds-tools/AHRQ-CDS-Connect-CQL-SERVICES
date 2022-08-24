@@ -8,7 +8,7 @@
         "semi": ["error", "always"]
     },
     "env": {
-        "es2017": true,
+        "es2020": true,
         "node": true,
         "mocha": true
     },

@@ -10,7 +10,7 @@ var cors = require('cors');
 const fs = require('fs');
 
 // Change to true to operate on HTTPS
-const HTTPS = false;
+const USE_HTTPS = process.env.CQL_SERVICES_USE_HTTPS ?? false;
 
 const index = require('./routes/index');
 const apiLibrary = require('./routes/api/library');
@@ -62,7 +62,7 @@ app.use((err, req, res, next) => {
 });
 
 // Read self-signed certificates for running on HTTPS
-if (HTTPS) {
+if (USE_HTTPS) {
   try {
     var key = fs.readFileSync(__dirname + '/certs/selfsigned.key');
     var cert = fs.readFileSync(__dirname + '/certs/selfsigned.crt');

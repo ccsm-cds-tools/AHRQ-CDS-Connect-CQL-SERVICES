@@ -33,10 +33,9 @@ This project was initialized using the [Express application generator](https://e
 To use this project in a development environment, you should perform the following steps:
 
 1. Install [Node.js LTS] (https://nodejs.org/en/download/)
-2. Install [Yarn](https://yarnpkg.com/en/docs/install)
-3. Execute the following from this project's root directory: `yarn`
+2. Execute the following from this project's root directory: `npm install`
     ```
-    $ yarn
+    $ npm install
     ```
 
 ## Configuration
@@ -202,9 +201,9 @@ _**Note**: This service does not attempt to decode and validate any JSON Web Tok
 
 ## Running CQL Services
 
-To run the server, simply invoke `yarn start`.
+To run the server, simply invoke `npm run start`.
 ```
-$ yarn start
+$ npm run start
 ```
 
 _**NOTE**: By default, this service runs on HTTP.  This means that information between the client and the server is **not** encrypted.  Under this configuration, calls to the CQL Services that contain real patient data should originate from the same host and avoid going over the network._
@@ -498,5 +497,5 @@ The general steps to test a CQL Hooks service in the CDS Hooks sandbox is as fol
 
 To encourage quality and consistency within the code base, all code should pass eslint without any warnings.  Many text editors can be configured to automatically flag eslint violations.  We also provide an npm script for running eslint on the project.  To run eslint, execute the following command:
 ```
-$ yarn run lint
+$ npm run lint
 ```
