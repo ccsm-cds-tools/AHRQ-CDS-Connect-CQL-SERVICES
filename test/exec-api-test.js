@@ -1,7 +1,7 @@
 const path = require('path');
 const { expect } = require('chai');
 const request = require('supertest');
-const app = require('../app');
+const { app } = require('../app');
 const csLoader = require('../lib/code-service-loader');
 const libsLoader = require('../lib/libraries-loader');
 
