@@ -5,11 +5,11 @@ const router = Router();
 import { Executor } from 'cql-execution';
 import { PatientSource } from 'cql-exec-fhir';
 import fhirclient from 'fhirclient';
-import cloneDeep from 'lodash/cloneDeep';
-import isPlainObject from 'lodash/isPlainObject';
-import { get } from '../lib/code-service-loader';
-import hooksLoader from '../lib/hooks-loader';
-import { get as _get } from '../lib/libraries-loader';
+import cloneDeep from 'lodash/cloneDeep.js';
+import isPlainObject from 'lodash/isPlainObject.js';
+import { get } from '../lib/code-service-loader.js';
+import hooksLoader from '../lib/hooks-loader.js';
+import { get as _get } from '../lib/libraries-loader.js';
 import { env } from 'process';
 
 // Middleware to setup response headers with CORS

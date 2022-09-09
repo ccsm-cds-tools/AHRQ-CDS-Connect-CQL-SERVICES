@@ -1,8 +1,8 @@
 'use strict';
 
 import { Router } from 'express';
-import hooksLoader from '../lib/hooks-loader';
-import libsLoader from '../lib/libraries-loader';
+import hooksLoader from '../lib/hooks-loader.js';
+import libsLoader from '../lib/libraries-loader.js';
 const router = Router();
 
 /* GET home page. */

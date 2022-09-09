@@ -3,8 +3,8 @@
 import { Router } from 'express';
 import { Executor } from 'cql-execution';
 import { PatientSource } from 'cql-exec-fhir';
-import csLoader from '../../lib/code-service-loader';
-import libsLoader from '../../lib/libraries-loader';
+import csLoader from '../../lib/code-service-loader.js';
+import libsLoader from '../../lib/libraries-loader.js';
 const router = Router();
 import { env } from 'process';
 

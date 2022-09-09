@@ -3,12 +3,13 @@
 /* eslint-disable no-console */
 import { createReadStream } from 'fs';
 import { join } from 'path';
-import { command, parse } from 'commander';
-import { post, get } from 'request';
+import Commander from 'commander';
+import pkg2 from 'request';
+const { post, get } = pkg2; 
 
 const DEFAULT_EXEC_EP = 'http://localhost:3000/api/library/USPSTF_Statin_Use_for_Primary_Prevention_of_CVD_in_Adults_FHIRv102/version/1.1.0';
 const DEFAULT_EXEC_MSG = join('test', 'examples', 'exec', 'DSTU2', 'unhealthy_patient.json');
-command('exec-post')
+Commander.command('exec-post')
   .alias('ep')
   .description(`Post a JSON message to a library endpoint.  Options can be passed to\n` +
             `  specify the endpoint and message to post.  If not specified, the\n` +
@@ -53,7 +54,7 @@ command('exec-post')
   });
 
 const DEFAULT_HOOKS_DISCOVER_EP = 'http://localhost:3000/cds-services';
-command('hooks-discover')
+Commander.command('hooks-discover')
   .alias('hd')
   .description(`Get the CDS Hooks discovery endpoint.  Options can be passed to\n` +
             `  specify the endpoint.  If not specified, the following default is used:\n` +
@@ -90,7 +91,7 @@ command('hooks-discover')
 
 const DEFAULT_HOOKS_CALL_EP = 'http://localhost:3000/cds-services/statin-use';
 const DEFAULT_HOOKS_MSG = join('test', 'examples', 'hooks', 'DSTU2', 'unhealthy_patient.json');
-command('hooks-call')
+Commander.command('hooks-call')
   .alias('hc')
   .description(`Call a CDS Hook.  Options can be passed to specify the endpoint and message to post.\n` +
             `  If not specified, the following defaults are used:\n` +
@@ -133,5 +134,5 @@ command('hooks-call')
       }));
   });
 
-parse(process.argv);
+Commander.parse(process.argv);
 

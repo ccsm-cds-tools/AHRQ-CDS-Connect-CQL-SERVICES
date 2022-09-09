@@ -4,16 +4,21 @@
 
 /* eslint-disable no-console */
 
-import { app as _app, options as _options } from '../app';
-const debug = require('debug')('cql-exec-service:server');
-import { load, get } from '../lib/libraries-loader';
-import { load as _load, get as _get } from '../lib/hooks-loader';
-import { load as __load } from '../lib/code-service-loader';
-import { sync } from 'mkdirp';
+import { app as _app, options as _options } from '../app.js';
+// const debug = require('debug')('cql-exec-service:server');
+import pkg from 'debug';
+const debug = pkg('cql-exec-service:server');
+import { load, get } from '../lib/libraries-loader.js';
+import { load as _load, get as _get } from '../lib/hooks-loader.js';
+import { load as __load } from '../lib/code-service-loader.js';
+import pkg2 from 'mkdirp';
+const { sync } = pkg2;
 import { createServer } from 'http';
 import { createServer as _createServer } from 'https';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const app = _app;
 const options = _options;

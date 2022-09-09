@@ -1,20 +1,23 @@
 'use strict';
 
-import express, { static } from 'express';
+import express, { static as static_middleware } from 'express';
 import { join } from 'path';
 import logger from 'morgan';
 import cookieParser from 'cookie-parser';
-import { json, urlencoded } from 'body-parser';
+import pkg from 'body-parser';
+const { json, urlencoded } = pkg;
 import helmet from 'helmet';
 import cors from 'cors';
 import { readFileSync } from 'fs';
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 // Change to true to operate on HTTPS
 const USE_HTTPS = process.env.CQL_SERVICES_USE_HTTPS ?? false;
 
-import index from './routes/index';
-import apiLibrary from './routes/api/library';
-import cdsServices from './routes/cds-services';
+import index from './routes/index.js';
+import apiLibrary from './routes/api/library.js';
+import cdsServices from './routes/cds-services.js';
 
 // Set up a default request size limit of 1mb, but allow it to be overridden via environment
 const limit = process.env.CQL_SERVICES_MAX_REQUEST_SIZE || '1mb';
@@ -41,7 +44,7 @@ app.use(urlencoded({
   extended: false
 }));
 app.use(cookieParser());
-app.use(static(join(__dirname, 'public')));
+app.use(static_middleware(join(__dirname, 'public')));
 
 app.use('/', index);
 app.use('/api/library', apiLibrary);
@@ -77,5 +80,4 @@ if (USE_HTTPS) {
   options = null;
 }
 
-export const app = app;
-export const options = options;
+export { app, options };
