@@ -4,19 +4,19 @@
 
 /* eslint-disable no-console */
 
-const appExport = require('../app');
+import { app as _app, options as _options } from '../app';
 const debug = require('debug')('cql-exec-service:server');
-const libsLoader = require('../lib/libraries-loader');
-const hooksLoader = require('../lib/hooks-loader');
-const csLoader = require('../lib/code-service-loader');
-const mkdirp = require('mkdirp');
-const http = require('http');
-const https = require('https');
-const path = require('path');
-const fs = require('fs');
+import { load, get } from '../lib/libraries-loader';
+import { load as _load, get as _get } from '../lib/hooks-loader';
+import { load as __load } from '../lib/code-service-loader';
+import { sync } from 'mkdirp';
+import { createServer } from 'http';
+import { createServer as _createServer } from 'https';
+import { join } from 'path';
+import { existsSync } from 'fs';
 
-const app = appExport.app;
-const options = appExport.options;
+const app = _app;
+const options = _options;
 
 /**
  * Check for CDS-specific configuration settings and set in app.locals if applicable
@@ -28,17 +28,17 @@ if (process.env.IGNORE_VSAC_ERRORS && process.env.IGNORE_VSAC_ERRORS.toLowerCase
 /**
  * Load local data into the local code service cache, repo, and local hooks
  */
-const codeServiceCachePath = path.join(__dirname, '..', '.vsac_cache');
-if (!fs.existsSync(codeServiceCachePath)) {
-  mkdirp.sync(codeServiceCachePath);
+const codeServiceCachePath = join(__dirname, '..', '.vsac_cache');
+if (!existsSync(codeServiceCachePath)) {
+  sync(codeServiceCachePath);
 }
-csLoader.load(codeServiceCachePath);
-libsLoader.load(path.join(__dirname, '..', 'config', 'libraries'));
-console.log(`Loaded ${libsLoader.get().all().length} libraries`);
-libsLoader.get().all().forEach(lib => console.log(`  - ${lib.source.library.identifier.id}:${lib.source.library.identifier.version}`));
-hooksLoader.load(path.join(__dirname, '..', 'config', 'hooks'));
-console.log(`Loaded ${hooksLoader.get().all().length} hooks`);
-hooksLoader.get().all().forEach(hook => console.log(`  - ${hook.id}`));
+__load(codeServiceCachePath);
+load(join(__dirname, '..', 'config', 'libraries'));
+console.log(`Loaded ${get().all().length} libraries`);
+get().all().forEach(lib => console.log(`  - ${lib.source.library.identifier.id}:${lib.source.library.identifier.version}`));
+_load(join(__dirname, '..', 'config', 'hooks'));
+console.log(`Loaded ${_get().all().length} hooks`);
+_get().all().forEach(hook => console.log(`  - ${hook.id}`));
 
 
 /**
@@ -53,8 +53,8 @@ app.set('port', port);
  */
 
 const server = options
-  ? https.createServer(options, app)
-  : http.createServer(app);
+  ? _createServer(options, app)
+  : createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.

@@ -3,7 +3,7 @@
 	// for the documentation about the jsconfig.json format
 	"compilerOptions": {
 		"target": "es2017",
-		"module": "commonjs",
+		"module": "ES2020",
 		"allowSyntheticDefaultImports": true
 	},
 	"exclude": [

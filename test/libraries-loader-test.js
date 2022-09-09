@@ -1,11 +1,11 @@
-const path = require('path');
-const { expect } = require('chai');
-const libsLoader = require('../lib/libraries-loader');
+import { resolve } from 'path';
+import { expect } from 'chai';
+import libsLoader from '../lib/libraries-loader';
 
 describe('libraries-loader', () => {
   beforeEach(() => {
     libsLoader.reset();
-    libsLoader.load(path.resolve(__dirname, 'fixtures', 'cql', 'R4'));
+    libsLoader.load(resolve(__dirname, 'fixtures', 'cql', 'R4'));
   });
 
   describe('#all()', () => {

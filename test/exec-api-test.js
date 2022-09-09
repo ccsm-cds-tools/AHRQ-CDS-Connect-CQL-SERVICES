@@ -1,15 +1,15 @@
-const path = require('path');
-const { expect } = require('chai');
-const request = require('supertest');
-const { app } = require('../app');
-const csLoader = require('../lib/code-service-loader');
-const libsLoader = require('../lib/libraries-loader');
+import { resolve } from 'path';
+import { expect } from 'chai';
+import request from 'supertest';
+import { app } from '../app';
+import csLoader from '../lib/code-service-loader';
+import libsLoader from '../lib/libraries-loader';
 
 describe('exec-api (version-agnostic)', () => {
   before(() => {
-    csLoader.load(path.resolve(__dirname, 'fixtures', 'code-service'));
+    csLoader.load(resolve(__dirname, 'fixtures', 'code-service'));
     libsLoader.reset();
-    libsLoader.load(path.resolve(__dirname, 'fixtures', 'cql', 'R4'));
+    libsLoader.load(resolve(__dirname, 'fixtures', 'cql', 'R4'));
   });
 
   describe('GET /api/library/LazyChecker', () => {
@@ -85,9 +85,9 @@ describe('exec-api (version-agnostic)', () => {
 ['DSTU2', 'STU3', 'R4'].forEach(version => {
   describe(`exec-api ${version}`, () => {
     before(() => {
-      csLoader.load(path.resolve(__dirname, 'fixtures', 'code-service'));
+      csLoader.load(resolve(__dirname, 'fixtures', 'code-service'));
       libsLoader.reset();
-      libsLoader.load(path.resolve(__dirname, 'fixtures', 'cql', version));
+      libsLoader.load(resolve(__dirname, 'fixtures', 'cql', version));
     });
 
     describe('POST /api/library/LazyChecker', () => {

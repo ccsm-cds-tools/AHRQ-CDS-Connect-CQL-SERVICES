@@ -1,15 +1,14 @@
 'use strict';
 
 /* eslint-disable no-console */
-const fs = require('fs');
-const path = require('path');
-const program = require('commander');
-const request = require('request');
+import { createReadStream } from 'fs';
+import { join } from 'path';
+import { command, parse } from 'commander';
+import { post, get } from 'request';
 
 const DEFAULT_EXEC_EP = 'http://localhost:3000/api/library/USPSTF_Statin_Use_for_Primary_Prevention_of_CVD_in_Adults_FHIRv102/version/1.1.0';
-const DEFAULT_EXEC_MSG = path.join('test', 'examples', 'exec', 'DSTU2', 'unhealthy_patient.json');
-program
-  .command('exec-post')
+const DEFAULT_EXEC_MSG = join('test', 'examples', 'exec', 'DSTU2', 'unhealthy_patient.json');
+command('exec-post')
   .alias('ep')
   .description(`Post a JSON message to a library endpoint.  Options can be passed to\n` +
             `  specify the endpoint and message to post.  If not specified, the\n` +
@@ -27,12 +26,12 @@ program
         'Content-Type': 'application/json'
       }
     };
-    fs.createReadStream(options.message)
+    createReadStream(options.message)
       .on('error', (err) => {
         console.log(err);
         console.log('--------------- DONE ---------------');
       })
-      .pipe(request.post(postOptions, (err, resp, body) => {
+      .pipe(post(postOptions, (err, resp, body) => {
         if (err) {
           console.error(err);
           console.log('--------------- DONE ---------------');
@@ -54,8 +53,7 @@ program
   });
 
 const DEFAULT_HOOKS_DISCOVER_EP = 'http://localhost:3000/cds-services';
-program
-  .command('hooks-discover')
+command('hooks-discover')
   .alias('hd')
   .description(`Get the CDS Hooks discovery endpoint.  Options can be passed to\n` +
             `  specify the endpoint.  If not specified, the following default is used:\n` +
@@ -69,7 +67,7 @@ program
         'Accept': 'application/json'
       }
     };
-    request.get(getOptions, (err, resp, body) => {
+    get(getOptions, (err, resp, body) => {
       if (err) {
         console.error(err);
         console.log('--------------- DONE ---------------');
@@ -91,9 +89,8 @@ program
   });
 
 const DEFAULT_HOOKS_CALL_EP = 'http://localhost:3000/cds-services/statin-use';
-const DEFAULT_HOOKS_MSG = path.join('test', 'examples', 'hooks', 'DSTU2', 'unhealthy_patient.json');
-program
-  .command('hooks-call')
+const DEFAULT_HOOKS_MSG = join('test', 'examples', 'hooks', 'DSTU2', 'unhealthy_patient.json');
+command('hooks-call')
   .alias('hc')
   .description(`Call a CDS Hook.  Options can be passed to specify the endpoint and message to post.\n` +
             `  If not specified, the following defaults are used:\n` +
@@ -110,12 +107,12 @@ program
         'Content-Type': 'application/json'
       }
     };
-    fs.createReadStream(options.message)
+    createReadStream(options.message)
       .on('error', (err) => {
         console.log(err);
         console.log('--------------- DONE ---------------');
       })
-      .pipe(request.post(postOptions, (err, resp, body) => {
+      .pipe(post(postOptions, (err, resp, body) => {
         if (err) {
           console.error(err);
           console.log('--------------- DONE ---------------');
@@ -136,5 +133,5 @@ program
       }));
   });
 
-program.parse(process.argv);
+parse(process.argv);
 

@@ -1,16 +1,16 @@
 'use strict';
 
-const express = require('express');
-const router = express.Router();
-const cql = require('cql-execution');
-const fhir = require('cql-exec-fhir');
-const fhirclient  = require('fhirclient');
-const cloneDeep = require('lodash/cloneDeep');
-const isPlainObject = require('lodash/isPlainObject');
-const csLoader = require('../lib/code-service-loader');
-const hooksLoader = require('../lib/hooks-loader');
-const libsLoader = require('../lib/libraries-loader');
-const process = require('process');
+import { Router } from 'express';
+const router = Router();
+import { Executor } from 'cql-execution';
+import { PatientSource } from 'cql-exec-fhir';
+import fhirclient from 'fhirclient';
+import cloneDeep from 'lodash/cloneDeep';
+import isPlainObject from 'lodash/isPlainObject';
+import { get } from '../lib/code-service-loader';
+import hooksLoader from '../lib/hooks-loader';
+import { get as _get } from '../lib/libraries-loader';
+import { env } from 'process';
 
 // Middleware to setup response headers with CORS
 router.use((request, response, next) => {
@@ -69,9 +69,9 @@ function resolver(req, res, next) {
   // Load the library
   let lib;
   if (typeof hook._config.cql.library.version === 'undefined') {
-    lib = libsLoader.get().resolveLatest(hook._config.cql.library.id);
+    lib = _get().resolveLatest(hook._config.cql.library.id);
   } else {
-    lib = libsLoader.get().resolve(hook._config.cql.library.id, hook._config.cql.library.version);
+    lib = _get().resolve(hook._config.cql.library.id, hook._config.cql.library.version);
   }
 
   if (typeof lib === 'undefined') {
@@ -102,9 +102,9 @@ function valuesetter(req, res, next) {
   // codeservice. Any valuesets not found in the local cache will be
   // downloaded from VSAC.
   // Use of API Key is preferred, as username/password will not be supported on Jan 1 2021
-  const ensureValueSets = process.env['UMLS_USER_NAME'] && !process.env['UMLS_API_KEY']
-    ? csLoader.get().ensureValueSetsInLibrary(library)
-    : csLoader.get().ensureValueSetsInLibraryWithAPIKey(library);
+  const ensureValueSets = env['UMLS_USER_NAME'] && !env['UMLS_API_KEY']
+    ? get().ensureValueSetsInLibrary(library)
+    : get().ensureValueSetsInLibraryWithAPIKey(library);
   ensureValueSets.then(() => next())
     .catch((err) => {
       logError(err);
@@ -179,10 +179,10 @@ async function call(req, res, next) {
   let patientSource;
   const usingFHIR = lib.source.library.usings.def.find(d => d.url == 'http://hl7.org/fhir' || d.localIdentifier == 'FHIR');
   switch (usingFHIR.version) {
-  case '1.0.2': patientSource = fhir.PatientSource.FHIRv102(); break;
-  case '3.0.0': patientSource = fhir.PatientSource.FHIRv300(); break;
-  case '4.0.0': patientSource = fhir.PatientSource.FHIRv400(); break;
-  case '4.0.1': patientSource = fhir.PatientSource.FHIRv401(); break;
+  case '1.0.2': patientSource = PatientSource.FHIRv102(); break;
+  case '3.0.0': patientSource = PatientSource.FHIRv300(); break;
+  case '4.0.0': patientSource = PatientSource.FHIRv400(); break;
+  case '4.0.1': patientSource = PatientSource.FHIRv401(); break;
   default:
     logError(`Library does not use any supported data models: ${lib.source.library.usings.def}`);
     sendError(res, 501, `Not Implemented: Unsupported data model (must be FHIR 1.0.2, 3.0.0, 4.0.0, or 4.0.1`);
@@ -195,7 +195,7 @@ async function call(req, res, next) {
   // Execute it and send the results
   let results;
   try {
-    const executor = new cql.Executor(lib, csLoader.get());
+    const executor = new Executor(lib, get());
     results = executor.exec(patientSource);
   } catch (err) {
     logError(err);
@@ -374,4 +374,4 @@ function logError(err) {
   console.error((new Date()).toISOString(), 'ERROR:', errString);
 }
 
-module.exports = router;
+export default router;

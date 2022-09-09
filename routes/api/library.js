@@ -1,12 +1,12 @@
 'use strict';
 
-const express = require('express');
-const cql = require('cql-execution');
-const fhir = require('cql-exec-fhir');
-const csLoader = require('../../lib/code-service-loader');
-const libsLoader = require('../../lib/libraries-loader');
-const router = express.Router();
-const process = require('process');
+import { Router } from 'express';
+import { Executor } from 'cql-execution';
+import { PatientSource } from 'cql-exec-fhir';
+import csLoader from '../../lib/code-service-loader';
+import libsLoader from '../../lib/libraries-loader';
+const router = Router();
+import { env } from 'process';
 
 // Establish the routes
 router.get('/:library', resolver, get);
@@ -73,7 +73,7 @@ function valuesetter(req, res, next) {
   // codeservice. Any valuesets not found in the local cache will be
   // downloaded from VSAC.
   // Use of API Key is preferred, as username/password will not be supported on Jan 1 2021
-  const ensureValueSets = process.env['UMLS_USER_NAME'] && !process.env['UMLS_API_KEY']
+  const ensureValueSets = env['UMLS_USER_NAME'] && !env['UMLS_API_KEY']
     ? csLoader.get().ensureValueSetsInLibrary(library)
     : csLoader.get().ensureValueSetsInLibraryWithAPIKey(library);
   ensureValueSets.then( () => next() )
@@ -137,10 +137,10 @@ function execute(req, res, next) {
   let patientSource;
   const usingFHIR = lib.source.library.usings.def.find(d => d.url == 'http://hl7.org/fhir' || d.localIdentifier == 'FHIR');
   switch (usingFHIR.version) {
-  case '1.0.2': patientSource = fhir.PatientSource.FHIRv102(); break;
-  case '3.0.0': patientSource = fhir.PatientSource.FHIRv300(); break;
-  case '4.0.0': patientSource = fhir.PatientSource.FHIRv400(); break;
-  case '4.0.1': patientSource = fhir.PatientSource.FHIRv401(); break;
+  case '1.0.2': patientSource = PatientSource.FHIRv102(); break;
+  case '3.0.0': patientSource = PatientSource.FHIRv300(); break;
+  case '4.0.0': patientSource = PatientSource.FHIRv400(); break;
+  case '4.0.1': patientSource = PatientSource.FHIRv401(); break;
   default:
     logError(`Library does not use any supported data models: ${lib.source.library.usings.def}`);
     sendError(res, 501, `Not Implemented: Unsupported data model (must be FHIR 1.0.2, 3.0.0, 4.0.0, or 4.0.1`);
@@ -167,7 +167,7 @@ function execute(req, res, next) {
 
   // Execute it and send the results
   try {
-    const executor = new cql.Executor(lib, csLoader.get(), parameters);
+    const executor = new Executor(lib, csLoader.get(), parameters);
     const results = executor.exec(patientSource);
     sendResults(res, results, parameters, expressions);
   } catch (err) {
@@ -229,7 +229,7 @@ function sendError(res, code, message, logIt = true) {
 }
 
 function logError(err) {
-  if(process.env.NODE_ENV === 'test') {
+  if(env.NODE_ENV === 'test') {
     return;
   }
   if (Array.isArray(err)) {
@@ -242,4 +242,4 @@ function logError(err) {
   console.error((new Date()).toISOString(), 'ERROR:', errString);
 }
 
-module.exports = router;
+export default router;

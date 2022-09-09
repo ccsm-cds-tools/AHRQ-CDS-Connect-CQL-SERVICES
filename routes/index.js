@@ -1,9 +1,9 @@
 'use strict';
 
-const express = require('express');
-const hooksLoader = require('../lib/hooks-loader');
-const libsLoader = require('../lib/libraries-loader');
-const router = express.Router();
+import { Router } from 'express';
+import hooksLoader from '../lib/hooks-loader';
+import libsLoader from '../lib/libraries-loader';
+const router = Router();
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
@@ -27,4 +27,4 @@ router.get('/', (req, res, next) => {
   });
 });
 
-module.exports = router;
+export default router;

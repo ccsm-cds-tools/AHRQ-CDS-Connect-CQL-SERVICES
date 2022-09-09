@@ -1,19 +1,19 @@
-const path = require('path');
-const { expect } = require('chai');
-const request = require('supertest');
-const nock = require('nock');
-const { app } = require('../app');
-const csLoader = require('../lib/code-service-loader');
-const hooksLoader = require('../lib/hooks-loader');
-const libsLoader = require('../lib/libraries-loader');
+import { resolve } from 'path';
+import { expect } from 'chai';
+import request from 'supertest';
+import nock from 'nock';
+import { app } from '../app';
+import csLoader from '../lib/code-service-loader';
+import hooksLoader from '../lib/hooks-loader';
+import libsLoader from '../lib/libraries-loader';
 
 describe('hooks-api (version-agnostic)', () => {
   before(() => {
-    csLoader.load(path.resolve(__dirname, 'fixtures', 'code-service'));
+    csLoader.load(resolve(__dirname, 'fixtures', 'code-service'));
     libsLoader.reset();
-    libsLoader.load(path.resolve(__dirname, 'fixtures', 'cql', 'R4'));
+    libsLoader.load(resolve(__dirname, 'fixtures', 'cql', 'R4'));
     hooksLoader.reset();
-    hooksLoader.load(path.resolve(__dirname, 'fixtures', 'hooks'));
+    hooksLoader.load(resolve(__dirname, 'fixtures', 'hooks'));
   });
 
   describe('GET /cds-services', () => {
@@ -47,11 +47,11 @@ describe('hooks-api (version-agnostic)', () => {
 ['DSTU2', 'STU3', 'R4'].forEach(version => {
   describe(`hooks-api ${version}`, () => {
     before(() => {
-      csLoader.load(path.resolve(__dirname, 'fixtures', 'code-service'));
+      csLoader.load(resolve(__dirname, 'fixtures', 'code-service'));
       libsLoader.reset();
-      libsLoader.load(path.resolve(__dirname, 'fixtures', 'cql', version));
+      libsLoader.load(resolve(__dirname, 'fixtures', 'cql', version));
       hooksLoader.reset();
-      hooksLoader.load(path.resolve(__dirname, 'fixtures', 'hooks'));
+      hooksLoader.load(resolve(__dirname, 'fixtures', 'hooks'));
     });
 
     describe('POST /cds-services/lazy-checker', () => {
