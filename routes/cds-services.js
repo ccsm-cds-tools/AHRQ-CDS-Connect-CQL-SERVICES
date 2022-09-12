@@ -10,7 +10,10 @@ import isPlainObject from 'lodash/isPlainObject.js';
 import { get } from '../lib/code-service-loader.js';
 import hooksLoader from '../lib/hooks-loader.js';
 import { get as _get } from '../lib/libraries-loader.js';
+import { get as getAppliable } from '../lib/apply-loader.js';
 import { env } from 'process';
+
+import { simpleResolver, applyAndMerge } from 'encender';
 
 // Middleware to setup response headers with CORS
 router.use((request, response, next) => {
@@ -61,27 +64,34 @@ function resolver(req, res, next) {
   res.locals.hook = hook;
 
   // Ensure the CQL library is specified in the hook definition
-  if (!hook._config || !hook._config.cql || !hook._config.cql.library || !hook._config.cql.library.id) {
-    sendError(res, 500, 'CDS Hook config does not specificy the CQL library to use.');
+  if (
+    (!hook._config || !hook._config.cql || !hook._config.cql.library || !hook._config.cql.library.id) &&
+    (!hook._config || !hook._config.apply)) {
+    sendError(res, 500, 'CDS Hook config does not specificy the CQL library to use nor a PlanDefinition to apply.');
     return;
   }
 
-  // Load the library
-  let lib;
-  if (typeof hook._config.cql.library.version === 'undefined') {
-    lib = _get().resolveLatest(hook._config.cql.library.id);
+  if (hook._config.apply) {
+    res.locals.apply = getAppliable()[hook._config.apply.key];
   } else {
-    lib = _get().resolve(hook._config.cql.library.id, hook._config.cql.library.version);
-  }
+    // Load the library
+    let lib;
+    if (typeof hook._config.cql.library.version === 'undefined') {
+      lib = _get().resolveLatest(hook._config.cql.library.id);
+    } else {
+      lib = _get().resolve(hook._config.cql.library.id, hook._config.cql.library.version);
+    }
 
-  if (typeof lib === 'undefined') {
-    logError(`Library not found: ${hook._config.cql.library.id} v${hook._config.cql.library.version}`);
-    // Set the 500 status and halt the request chain now
-    sendError(res, 500, 'CDS Hook config specified a CQL library, but library could not be located.');
-    return;
+    if (typeof lib === 'undefined') {
+      logError(`Library not found: ${hook._config.cql.library.id} v${hook._config.cql.library.version}`);
+      // Set the 500 status and halt the request chain now
+      sendError(res, 500, 'CDS Hook config specified a CQL library, but library could not be located.');
+      return;
+    } else {
+      // Set the library in the res.locals for use by other middleware and/or routes
+      res.locals.library = lib;
+    }
   }
-  // Set the library in the res.locals for use by other middleware and/or routes
-  res.locals.library = lib;
 
   // Invoke the next middleware/route in the chain
   next();
@@ -96,30 +106,34 @@ function resolver(req, res, next) {
  */
 function valuesetter(req, res, next) {
   // Get the lib from the res.locals (thanks, middleware!)
-  const library = res.locals.library;
+  const library = res.locals?.library;
 
-  // If the calling library has valuesets, crosscheck them with the local
-  // codeservice. Any valuesets not found in the local cache will be
-  // downloaded from VSAC.
-  // Use of API Key is preferred, as username/password will not be supported on Jan 1 2021
-  const ensureValueSets = env['UMLS_USER_NAME'] && !env['UMLS_API_KEY']
-    ? get().ensureValueSetsInLibrary(library)
-    : get().ensureValueSetsInLibraryWithAPIKey(library);
-  ensureValueSets.then(() => next())
-    .catch((err) => {
-      logError(err);
-      if (req.app.locals.ignoreVSACErrors) {
-        next();
-      } else {
-        let errToSend = err;
-        if (err instanceof Error) {
-          errToSend = err.message;
-        } else if (Array.isArray(err)) {
-          errToSend = err.map(e => e instanceof Error ? e.message : e);
+  if (library) {
+    // If the calling library has valuesets, crosscheck them with the local
+    // codeservice. Any valuesets not found in the local cache will be
+    // downloaded from VSAC.
+    // Use of API Key is preferred, as username/password will not be supported on Jan 1 2021
+    const ensureValueSets = env['UMLS_USER_NAME'] && !env['UMLS_API_KEY']
+      ? get().ensureValueSetsInLibrary(library)
+      : get().ensureValueSetsInLibraryWithAPIKey(library);
+    ensureValueSets.then(() => next())
+      .catch((err) => {
+        logError(err);
+        if (req.app.locals.ignoreVSACErrors) {
+          next();
+        } else {
+          let errToSend = err;
+          if (err instanceof Error) {
+            errToSend = err.message;
+          } else if (Array.isArray(err)) {
+            errToSend = err.map(e => e instanceof Error ? e.message : e);
+          }
+          sendError(res, 500, errToSend, false);
         }
-        sendError(res, 500, errToSend, false);
-      }
-    });
+      });
+  } else {
+    next();
+  }
 }
 
 /**
@@ -128,6 +142,7 @@ function valuesetter(req, res, next) {
  */
 async function call(req, res, next) {
   const hook = res.locals.hook;
+  if (res.locals.apply) { hook.prefetch = res.locals.apply.prefetch; }
 
   // Build up a single bundle representing all data
   const bundle = {
@@ -172,94 +187,111 @@ async function call(req, res, next) {
     }
   }
 
-  // Get the lib from the res.locals (thanks, middleware!)
-  const lib = res.locals.library;
+  console.log(bundle);
 
-  // Load the patient source
-  let patientSource;
-  const usingFHIR = lib.source.library.usings.def.find(d => d.url == 'http://hl7.org/fhir' || d.localIdentifier == 'FHIR');
-  switch (usingFHIR.version) {
-  case '1.0.2': patientSource = PatientSource.FHIRv102(); break;
-  case '3.0.0': patientSource = PatientSource.FHIRv300(); break;
-  case '4.0.0': patientSource = PatientSource.FHIRv400(); break;
-  case '4.0.1': patientSource = PatientSource.FHIRv401(); break;
-  default:
-    logError(`Library does not use any supported data models: ${lib.source.library.usings.def}`);
-    sendError(res, 501, `Not Implemented: Unsupported data model (must be FHIR 1.0.2, 3.0.0, 4.0.0, or 4.0.1`);
-    return;
-  }
-
-  // Load the data into the patient source
-  patientSource.loadBundles([bundle]);
-
-  // Execute it and send the results
-  let results;
-  try {
-    const executor = new Executor(lib, get());
-    results = executor.exec(patientSource);
-  } catch (err) {
-    logError(err);
-    let errToSend = err;
-    let responseCode = 500;
-    if (err instanceof Error) {
-      errToSend = err.message;
-      // If it's an invalid UCUM unit or other invalid value, send 422 response code instead
-      // of 500. Ideally this would be a more specific error type we could catch, but it isn't;
-      // so detect it via a simple string match for the word 'invalid' or 'UCUM' for now.
-      if (errToSend.indexOf('invalid') !== -1 || errToSend.indexOf('UCUM') !== -1) {
-        responseCode = 422;
-      }
-    } else if (Array.isArray(err)) {
-      errToSend = err.map(e => e instanceof Error ? e.message : e);
-    }
-    sendError(res, responseCode, errToSend, false);
-  }
-
-  const resultIDs = Object.keys(results.patientResults);
-  if (resultIDs.length == 0) {
-    sendError(res, 400, 'Insufficient data to provide results.');
-    return;
-  } else if (resultIDs.length > 1) {
-    sendError(res, 400, 'Data contained information about more than one patient.');
-    return;
-  }
-  const pid = resultIDs[0];
-  const pResults = results.patientResults[pid];
-
-  const cards= [];
-
-  // Get the cards from the config and replace the ${...} expressions
-  for (let i = 0; i < hook._config.cards.length; i++) {
-    const cardCfg = cloneDeep(hook._config.cards[i]);
-
-    // Check the condition
-    if (cardCfg.conditionExpression != null) {
-      const hasConditionExpression = Object.prototype.hasOwnProperty.call(pResults, cardCfg.conditionExpression.split('.')[0]);
-      if (!hasConditionExpression) {
-        sendError(res, 500, 'Hook configuration refers to non-existent conditionExpression');
-        return;
-      }
-      const condition = resolveExp(pResults, cardCfg.conditionExpression);
-      if (!condition) {
-        continue;
-      }
-    }
-    const card = interpolateVariables(cardCfg.card, pResults);
-
-    // If there are errors or warnings, report them as extensions
-    const report = (label, items) => {
-      if (items == null || items.length === 0) {
-        return;
-      } else if (!Array.isArray(items)) {
-        items = [items];
-      }
-      card.extension = card.extension || {};
-      card.extension[label] = items;
+  let cards= [];
+  if (res.locals?.apply) {
+    let patientData = bundle.entry.map(b => b.resource);
+    const { elmJson, cdsResources, valueSetJson } = res.locals.apply;
+    let resolver = simpleResolver([...cdsResources, ...patientData], true);
+    const planDefinition = resolver('PlanDefinition/'+hook._config.apply.planDefinition)[0];
+    const patientReference = 'Patient/' + patientData.filter(pd => pd.resourceType === 'Patient').map(pd => pd.id)[0];
+    const aux = {
+      elmJson,
+      valueSetJson
     };
-    report('errors', pResults['Errors']);
-    report('warnings', pResults['Warnings']);
+    const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
+    console.log(RequestGroup);
+    console.log(otherResources);
+  } else {
 
-    cards.push(card);
+    // Get the lib from the res.locals (thanks, middleware!)
+    const lib = res.locals.library;
+
+    // Load the patient source
+    let patientSource;
+    const usingFHIR = lib.source.library.usings.def.find(d => d.url == 'http://hl7.org/fhir' || d.localIdentifier == 'FHIR');
+    switch (usingFHIR.version) {
+    case '1.0.2': patientSource = PatientSource.FHIRv102(); break;
+    case '3.0.0': patientSource = PatientSource.FHIRv300(); break;
+    case '4.0.0': patientSource = PatientSource.FHIRv400(); break;
+    case '4.0.1': patientSource = PatientSource.FHIRv401(); break;
+    default:
+      logError(`Library does not use any supported data models: ${lib.source.library.usings.def}`);
+      sendError(res, 501, `Not Implemented: Unsupported data model (must be FHIR 1.0.2, 3.0.0, 4.0.0, or 4.0.1`);
+      return;
+    }
+
+    // Load the data into the patient source
+    patientSource.loadBundles([bundle]);
+
+    // Execute it and send the results
+    let results;
+    try {
+      const executor = new Executor(lib, get());
+      results = executor.exec(patientSource);
+    } catch (err) {
+      logError(err);
+      let errToSend = err;
+      let responseCode = 500;
+      if (err instanceof Error) {
+        errToSend = err.message;
+        // If it's an invalid UCUM unit or other invalid value, send 422 response code instead
+        // of 500. Ideally this would be a more specific error type we could catch, but it isn't;
+        // so detect it via a simple string match for the word 'invalid' or 'UCUM' for now.
+        if (errToSend.indexOf('invalid') !== -1 || errToSend.indexOf('UCUM') !== -1) {
+          responseCode = 422;
+        }
+      } else if (Array.isArray(err)) {
+        errToSend = err.map(e => e instanceof Error ? e.message : e);
+      }
+      sendError(res, responseCode, errToSend, false);
+    }
+
+    const resultIDs = Object.keys(results.patientResults);
+    if (resultIDs.length == 0) {
+      sendError(res, 400, 'Insufficient data to provide results.');
+      return;
+    } else if (resultIDs.length > 1) {
+      sendError(res, 400, 'Data contained information about more than one patient.');
+      return;
+    }
+    const pid = resultIDs[0];
+    const pResults = results.patientResults[pid];
+
+    // Get the cards from the config and replace the ${...} expressions
+    for (let i = 0; i < hook._config.cards.length; i++) {
+      const cardCfg = cloneDeep(hook._config.cards[i]);
+
+      // Check the condition
+      if (cardCfg.conditionExpression != null) {
+        const hasConditionExpression = Object.prototype.hasOwnProperty.call(pResults, cardCfg.conditionExpression.split('.')[0]);
+        if (!hasConditionExpression) {
+          sendError(res, 500, 'Hook configuration refers to non-existent conditionExpression');
+          return;
+        }
+        const condition = resolveExp(pResults, cardCfg.conditionExpression);
+        if (!condition) {
+          continue;
+        }
+      }
+      const card = interpolateVariables(cardCfg.card, pResults);
+
+      // If there are errors or warnings, report them as extensions
+      const report = (label, items) => {
+        if (items == null || items.length === 0) {
+          return;
+        } else if (!Array.isArray(items)) {
+          items = [items];
+        }
+        card.extension = card.extension || {};
+        card.extension[label] = items;
+      };
+      report('errors', pResults['Errors']);
+      report('warnings', pResults['Warnings']);
+
+      cards.push(card);
+    }
   }
 
   res.json({

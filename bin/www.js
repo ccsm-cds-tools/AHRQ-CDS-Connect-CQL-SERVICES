@@ -11,6 +11,7 @@ const debug = pkg('cql-exec-service:server');
 import { load, get } from '../lib/libraries-loader.js';
 import { load as _load, get as _get } from '../lib/hooks-loader.js';
 import { load as __load } from '../lib/code-service-loader.js';
+import { load as loadAppliable, get as getAppliable } from '../lib/apply-loader.js';
 import pkg2 from 'mkdirp';
 const { sync } = pkg2;
 import { createServer } from 'http';
@@ -45,6 +46,9 @@ _load(join(__dirname, '..', 'config', 'hooks'));
 console.log(`Loaded ${_get().all().length} hooks`);
 _get().all().forEach(hook => console.log(`  - ${hook.id}`));
 
+await loadAppliable(join(__dirname, '..', 'config', 'apply'));
+console.log(`Loaded ${Object.keys(getAppliable()).length} applicable PlanDefinitions`);
+Object.keys(getAppliable()).forEach(pd => console.log(`  - ${pd}`));
 
 /**
  * Get port from environment and store in Express.

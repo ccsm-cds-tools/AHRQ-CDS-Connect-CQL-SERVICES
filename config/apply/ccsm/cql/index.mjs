@@ -36,4 +36,22 @@ const elmJsonDependencyArray = [
   ScreeningLibrary
 ];
 
-export const elmJsonDependencies = elmJsonDependencyArray;
+// Reformat ELM JSON value set references to match what is expected by the 
+// code service built into the cql execution engine.
+// NOTE: This is needed since we are not using `cql-exec-vsac`.
+export const elmJsonDependencies = elmJsonDependencyArray.reduce((acc, elm) => {
+  let refs = elm?.library?.valueSets?.def;
+  if (refs) {
+    refs = refs.map(r => {
+      return {
+        ...r,
+        id: r.id.split('/').pop()
+      }
+    });
+    elm.library.valueSets.def = refs;
+  }
+  return {
+    ...acc,
+    [elm.library.identifier.id]: elm
+  }
+}, {});
