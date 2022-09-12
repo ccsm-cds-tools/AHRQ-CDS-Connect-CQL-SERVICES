@@ -3,7 +3,7 @@
   "version": "3.0.0-alpha",
   "description": "A RESTful CQL execution service",
   "license": "Apache-2.0",
-  "type":"module",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git@github.com:AHRQ-CDS/AHRQ-CDS-Connect-CQL-SERVICES.git"
@@ -26,6 +26,7 @@
     "cql-exec-vsac": "^1.2.2",
     "cql-execution": "^2.3.3",
     "debug": "~2.6.0",
+    "encender": "github:ccsm-cds-tools/encender#merge_nesting",
     "express": "^4.17.3",
     "fhirclient": "^2.4.0",
     "helmet": "^4.6.0",

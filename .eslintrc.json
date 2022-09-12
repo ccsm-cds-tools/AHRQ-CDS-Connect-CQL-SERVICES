@@ -4,7 +4,7 @@
         "linebreak-style": ["error", "unix"],
         "no-console": ["warn", { "allow": ["warn", "error"] }],
         "no-unused-vars": ["error", { "vars": "all", "args": "none" }],
-        "quotes": ["error", "single", { "allowTemplateLiterals": true }],
+        "quotes": ["warn", "single", { "allowTemplateLiterals": true }],
         "semi": ["error", "always"]
     },
     "env": {
