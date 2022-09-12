@@ -38,3 +38,5 @@ npm-debug.log
 
 # Directory for placing self-signed certificates
 /certs
+
+**/valueset-db.js
