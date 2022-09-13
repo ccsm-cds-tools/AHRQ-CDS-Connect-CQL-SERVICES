@@ -1,5 +1,5 @@
 'use strict';
-
+import { env } from 'process';
 import { Router } from 'express';
 const router = Router();
 import { Executor } from 'cql-execution';
@@ -7,13 +7,11 @@ import { PatientSource } from 'cql-exec-fhir';
 import fhirclient from 'fhirclient';
 import cloneDeep from 'lodash/cloneDeep.js';
 import isPlainObject from 'lodash/isPlainObject.js';
+import { simpleResolver, applyAndMerge } from 'encender';
 import { get } from '../lib/code-service-loader.js';
 import hooksLoader from '../lib/hooks-loader.js';
 import { get as _get } from '../lib/libraries-loader.js';
 import { get as getAppliable } from '../lib/apply-loader.js';
-import { env } from 'process';
-
-import { simpleResolver, applyAndMerge } from 'encender';
 
 // Middleware to setup response headers with CORS
 router.use((request, response, next) => {
@@ -35,7 +33,7 @@ router.post('/:id', resolver, valuesetter, call);
 
 /**
  * Route handler that returns the list of available CDS services.
- * @see {@link https://cds-hooks.org/specification/1.0/#discovery|Discovery}
+ * @see {@link https://cds-hooks.hl7.org/1.0/#discovery}
  */
 function discover(req, res, next) {
   res.json({
@@ -63,15 +61,14 @@ function resolver(req, res, next) {
   }
   res.locals.hook = hook;
 
-  // Ensure the CQL library is specified in the hook definition
-  if (
-    (!hook._config || !hook._config.cql || !hook._config.cql.library || !hook._config.cql.library.id) &&
-    (!hook._config || !hook._config.apply)) {
-    sendError(res, 500, 'CDS Hook config does not specificy the CQL library to use nor a PlanDefinition to apply.');
+  // Ensure the hook definition specifies either a CQL library or a PlanDefinition
+  if ( (hook?._config?.cql?.library?.id || hook?._config?.apply?.planDefinition) === false ) {
+    sendError(res, 500, 'CDS Hook config does not specificy a CQL library or a PlanDefinition to $apply.');
     return;
   }
 
   if (hook._config.apply) {
+    // Load the definitions needed for the $apply operation
     res.locals.apply = getAppliable()[hook._config.apply.key];
   } else {
     // Load the library
@@ -153,7 +150,7 @@ async function call(req, res, next) {
   if (hook.prefetch) {
     // Create a FHIR client in case we need to call out to the FHIR server
     const client = getFHIRClient(req, res);
-    const searchRequests = [];
+    let searchRequests = [];
     // Iterate through the prefetch keys to determine if they are supplied or if we need to query for the data
     for (const key of Object.keys(hook.prefetch)) {
       const pf = req.body.prefetch[key];
@@ -169,16 +166,17 @@ async function call(req, res, next) {
           searchURL = searchURL.split(`{{context.${contextKey}}}`).join(req.body.context[contextKey]);
         });
         // Perform the search and add the response to the bundle
-        const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
-          .then(result => addResponseToBundle(result, bundle));
-        // Push the promise onto the array so we can await it later
-        searchRequests.push(searchRequest);
+        // const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
+        //   .then(result => addResponseToBundle(result, bundle));
+        // // Push the promise onto the array so we can await it later
+        // searchRequests.push(searchRequest);
       } else {
         // The prefetch was supplied so just add it directly to the bundle
         addResponseToBundle(pf, bundle);
       }
     }
     // Wait for any open requests to finish, returning if there is an error
+    searchRequests = [];
     try {
       await Promise.all(searchRequests);
     } catch(err) {
@@ -197,7 +195,7 @@ async function call(req, res, next) {
     const planDefinition = resolver('PlanDefinition/'+hook._config.apply.planDefinition)[0];
     const patientReference = 'Patient/' + patientData.filter(pd => pd.resourceType === 'Patient').map(pd => pd.id)[0];
     const aux = {
-      elmJson,
+      elmJsonDependencies: elmJson,
       valueSetJson
     };
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);

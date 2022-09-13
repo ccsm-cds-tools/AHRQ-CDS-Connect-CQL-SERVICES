@@ -34,21 +34,25 @@ if (process.env.IGNORE_VSAC_ERRORS && process.env.IGNORE_VSAC_ERRORS.toLowerCase
 /**
  * Load local data into the local code service cache, repo, and local hooks
  */
+
+// Load PlanDefinitions before anything else
+await loadAppliable(join(__dirname, '..', 'config', 'apply'));
+console.log(`Loaded ${Object.keys(getAppliable()).length} applicable PlanDefinitions`);
+Object.keys(getAppliable()).forEach(pd => console.log(`  - ${pd}`));
+
 const codeServiceCachePath = join(__dirname, '..', '.vsac_cache');
 if (!existsSync(codeServiceCachePath)) {
   sync(codeServiceCachePath);
 }
 __load(codeServiceCachePath);
+
 load(join(__dirname, '..', 'config', 'libraries'));
 console.log(`Loaded ${get().all().length} libraries`);
+
 get().all().forEach(lib => console.log(`  - ${lib.source.library.identifier.id}:${lib.source.library.identifier.version}`));
 _load(join(__dirname, '..', 'config', 'hooks'));
 console.log(`Loaded ${_get().all().length} hooks`);
 _get().all().forEach(hook => console.log(`  - ${hook.id}`));
-
-await loadAppliable(join(__dirname, '..', 'config', 'apply'));
-console.log(`Loaded ${Object.keys(getAppliable()).length} applicable PlanDefinitions`);
-Object.keys(getAppliable()).forEach(pd => console.log(`  - ${pd}`));
 
 /**
  * Get port from environment and store in Express.
