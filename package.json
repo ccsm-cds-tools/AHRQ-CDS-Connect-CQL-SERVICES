@@ -26,7 +26,7 @@
     "cql-exec-vsac": "^1.2.2",
     "cql-execution": "^2.3.3",
     "debug": "~2.6.0",
-    "encender": "github:ccsm-cds-tools/encender#merge_nesting",
+    "encender": "^0.5.0",
     "express": "^4.17.3",
     "fhirclient": "^2.4.0",
     "helmet": "^4.6.0",
