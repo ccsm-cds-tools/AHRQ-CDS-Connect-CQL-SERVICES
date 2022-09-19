@@ -165,6 +165,7 @@ async function call(req, res, next) {
         Object.keys(req.body.context || {}).forEach(contextKey => {
           searchURL = searchURL.split(`{{context.${contextKey}}}`).join(req.body.context[contextKey]);
         });
+        // TODO: Uncomment
         // Perform the search and add the response to the bundle
         // const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
         //   .then(result => addResponseToBundle(result, bundle));
@@ -188,7 +189,7 @@ async function call(req, res, next) {
   console.log(bundle);
 
   let cards= [];
-  if (res.locals?.apply) {
+  if (res.locals?.apply) { // $apply a PlanDefinition
     let patientData = bundle.entry.map(b => b.resource);
     const { elmJson, cdsResources, valueSetJson } = res.locals.apply;
     let resolver = simpleResolver([...cdsResources, ...patientData], true);
@@ -199,9 +200,21 @@ async function call(req, res, next) {
       valueSetJson
     };
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
-    console.log(RequestGroup);
-    console.log(otherResources);
-  } else {
+    for (const action of RequestGroup.action) {
+      let sources = action?.documentation ? getSources(action.documentation) : [];
+      let card = {
+        summary: action.title,
+        detail: action.description,
+        indicator: getIndicator(action.priority),
+        source: sources.slice(0,1),
+        selectionBehavior: action.selectionBehavior,
+        suggestion: extractSuggestions(action.action, otherResources),
+        links: sources.slice(1)?.map(s => ({...s,type:'absolute'}))
+      };     
+      cards.push(card);
+    }
+    
+  } else { // Evaluate CQL expressions (not tied to any PlanDefinition)
 
     // Get the lib from the res.locals (thanks, middleware!)
     const lib = res.locals.library;
@@ -402,6 +415,61 @@ function logError(err) {
   }
   const errString = err instanceof Error ? `${err.message}\n  ${err.stack}` : `${err}`;
   console.error((new Date()).toISOString(), 'ERROR:', errString);
+}
+
+function getIndicator(priority) {
+  switch (priority) {
+    case 'routine': return 'info';
+    case 'urgent': return 'warning';
+    case 'asap': return 'critical';
+    case 'stat': return 'critical';
+    default: return null;
+  }
+}
+
+function getSources(relatedArtifacts) {
+  let sources = [];
+  for (const related of relatedArtifacts) {
+    if (['documentation','justification','citation','derived-from'].includes(related.type)) {
+      sources.push({
+        label: related.label,
+        url: related.url
+      });
+    }
+  }
+  return sources;
+}
+
+function extractSuggestions(actions, otherResources) {
+  let resolver = simpleResolver([...otherResources], true);
+  let suggestions = [];
+  for (const action of actions) {
+    suggestions.push({
+      label: action.title,
+      uuid: action.id,
+      actions: action?.action ? extractSubactions(action.action, resolver) : [],
+      resource: action?.resource?.reference ? 
+        [{
+          type: 'create',
+          description: action.description,
+          resource: resolver(action.resource.reference)[0],
+        }] : 
+        []
+    });
+  }
+  return suggestions;
+}
+
+function extractSubactions(actionAction, resolver) {
+  let subactions = [];
+  for (const a2 of actionAction) {
+    subactions.push({
+      type: 'create',
+      description: a2.description ?? a2.title,
+      resource: a2?.resource?.reference ? resolver(a2.resource.reference)[0] : null
+    });
+  }
+  return subactions;
 }
 
 export default router;
