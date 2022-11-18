@@ -1,8 +1,8 @@
 {
   "id": "ccsm",
   "hook": "patient-view",
-  "title": "CMS’s Million Hearts® Model Longitudinal ASCVD Risk Assessment Tool for Baseline 10-Year ASCVD Risk",
-  "description": "This artifact provides the ability to calculate a baseline 10-Year ASCVD risk score to support primary prevention of ASCVD. It utilizes the 2013 ACC/AHA pooled cohort equation to calculate the risk of developing a first time \"hard\" ASCVD event, defined as: nonfatal myocardial infarction (MI), coronary heart disease (CHD) death, nonfatal stroke, or fatal stroke.",
+  "title": "Cervical Cancer Screening and Management",
+  "description": "Cervical Cancer Screening and Management",
   "_config": {
     "apply": {
       "key": "ccsm",

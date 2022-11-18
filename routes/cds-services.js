@@ -141,6 +141,25 @@ async function call(req, res, next) {
   const hook = res.locals.hook;
   if (res.locals.apply) { hook.prefetch = res.locals.apply.prefetch; }
 
+  console.log();
+  console.log('==================================================');
+  console.log('Received call for %s hook', hook?.title);
+
+  // Clean prefetch before logging
+  let body = cloneDeep(req?.body);
+  Object.entries(body.prefetch).forEach(([key,value]) => {
+    if (value?.resourceType !== 'Bundle') {
+      body.prefetch[key] = {
+        id: value.id,
+        resourceType: value.resourceType
+      };
+    }
+  });
+
+  console.log('--------------------------------------------------');
+  console.log('Request body:');
+  console.log(body);
+
   // Build up a single bundle representing all data
   const bundle = {
     resourceType: 'Bundle',
@@ -186,7 +205,13 @@ async function call(req, res, next) {
     }
   }
 
-  console.log(bundle);
+  console.log('--------------------------------------------------');
+  console.log('Bundle going into CDS:');
+  bundle.entry.forEach(ent => {
+    const rt = ent.resource?.resourceType ?? '*** no resource type ***';
+    const rid = ent.resource?.id ?? '*** no resource id ***';
+    console.log(' -', rt, rid);
+  });
 
   let cards= [];
   if (res.locals?.apply) { // $apply a PlanDefinition
@@ -213,6 +238,17 @@ async function call(req, res, next) {
       };     
       cards.push(card);
     }
+
+    console.log('--------------------------------------------------');
+    console.log('Cards returned from CDS:');
+    console.log(cards);
+
+    console.log('--------------------------------------------------');
+    console.log('Suggestions:');
+    cards.forEach(card => {
+      console.log(card.suggestion);
+    });
+    console.log();
     
   } else { // Evaluate CQL expressions (not tied to any PlanDefinition)
 
