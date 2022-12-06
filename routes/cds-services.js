@@ -225,7 +225,8 @@ async function call(req, res, next) {
       valueSetJson
     };
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
-    for (const action of RequestGroup.action) {
+    resolver = simpleResolver([...otherResources], true);
+    for (const action of RequestGroup.action[0].action) {
       let sources = action?.documentation ? getSources(action.documentation) : [];
       let card = {
         summary: action.title,
@@ -233,7 +234,16 @@ async function call(req, res, next) {
         indicator: getIndicator(action.priority),
         source: sources.slice(0,1),
         selectionBehavior: action.selectionBehavior,
-        suggestion: extractSuggestions(action.action, otherResources),
+        suggestion: action.action ? extractSuggestions(action.action, otherResources) : 
+          {
+            label: action.title,
+            uuid: action.id,
+            actions: {
+              type: 'create',
+              description: action.description ?? action.title,
+              resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null
+            }
+          },
         links: sources.slice(1)?.map(s => ({...s,type:'absolute'}))
       };     
       cards.push(card);
@@ -483,14 +493,19 @@ function extractSuggestions(actions, otherResources) {
     suggestions.push({
       label: action.title,
       uuid: action.id,
-      actions: action?.action ? extractSubactions(action.action, resolver) : [],
-      resource: action?.resource?.reference ? 
-        [{
-          type: 'create',
-          description: action.description,
-          resource: resolver(action.resource.reference)[0],
-        }] : 
-        []
+      actions: action?.action ? extractSubactions(action.action, resolver) :
+        {
+          type: action?.type ?? 'create',
+          description: action?.description,
+          resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null,
+        }
+      // resource: action?.resource?.reference ? 
+      //   [{
+      //     type: 'create',
+      //     description: action.description,
+      //     resource: resolver(action.resource.reference)[0],
+      //   }] : 
+      //   []
     });
   }
   return suggestions;
