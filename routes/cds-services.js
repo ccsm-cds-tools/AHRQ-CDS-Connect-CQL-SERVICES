@@ -518,10 +518,13 @@ function extractCards(actions, resolver) {
   // For each action in the array
   for (const action of actions) {
 
+    let cards = [];
+
     // If action.resource.reference contains a CommunicationRequest
     if (action.resource?.reference && action.resource?.reference.includes('CommunicationRequest')) {
     
       // Make an information card with that action (pass into extractInformation)
+      cards.push(extractInformation(action));
 
     // If action.selection behavior exists
     } else if (action.selectionBehavior) {
@@ -539,6 +542,33 @@ function extractCards(actions, resolver) {
   }
 
 }
+
+function extractInformation(action, resolver) {
+
+  let sources = action?.documentation ? getSources(action.documentation) : [];
+  let card = {
+    summary: action.title,
+    detail: action.description,
+    uuid: Math.floor(100000 + Math.random() * 900000), // Cards must have a uuid for suggestions to render properly
+    indicator: getIndicator(action.priority),
+    source: sources.slice(0,1),
+    selectionBehavior: action.selectionBehavior,
+    suggestions: action.action ? extractSuggestions(action.action, otherResources) : 
+      [{
+        label: action.title,
+        uuid: action.id,
+        actions: [{
+          type: 'create',
+          description: action.description ?? action.title,
+          resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null
+        }]
+      }],
+    links: sources.slice(1)?.map(s => ({...s,type:'absolute'}))
+  };     
+  // cards.push(card);
+
+}
+
 
 function extractSuggestions(actions, otherResources) {
   let resolver = simpleResolver([...otherResources], true);
