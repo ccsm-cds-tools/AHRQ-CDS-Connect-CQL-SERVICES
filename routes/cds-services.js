@@ -226,6 +226,32 @@ async function call(req, res, next) {
     };
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
     resolver = simpleResolver([...otherResources], true);
+    
+    
+    // If RequestGroup has an action
+    if (RequestGroup?.action) {
+  
+      // Pass action array into extractCards recursive function
+      let newCards = extractCards(RequestGroup.action, resolver);
+      
+      // For each action in the array
+
+      // If action.resource.reference contains a CommunicationRequest
+      // Make an information card with that action (pass into extractInformation)
+
+      // If action.selection behavior exists
+      // Make a suggestion card with the kids as suggestions (pass kids into extractSuggetsions)
+      // If they are a Service Request, add a suggestion with an action with a resource
+
+      // Else if action exists, call Extract card on the action
+
+      // Return all types of cards and then add them to the cards array
+      
+      // Communication request - create a new card where the detail on the card becomes a payload
+      // If you see an action with selection behavior, each of those are suggestions with a card
+    
+    }
+
     for (const action of RequestGroup.action[0].action) {
       let sources = action?.documentation ? getSources(action.documentation) : [];
       let card = {
@@ -485,6 +511,33 @@ function getSources(relatedArtifacts) {
     }
   }
   return sources;
+}
+
+function extractCards(actions, resolver) {
+
+  // For each action in the array
+  for (const action of actions) {
+
+    // If action.resource.reference contains a CommunicationRequest
+    if (action.resource?.reference && action.resource?.reference.includes('CommunicationRequest')) {
+    
+      // Make an information card with that action (pass into extractInformation)
+
+    // If action.selection behavior exists
+    } else if (action.selectionBehavior) {
+
+      // Make a suggestion card with the kids as suggestions (pass kids into extractSuggetsions)
+      // If they are a Service Request, add a suggestion with an action with a resource
+
+    // Else if sub-action exists, call Extract card on the action
+    } else if (action.action) {
+      extractCards(action.action);
+    }
+
+    // Return all types of cards
+
+  }
+
 }
 
 function extractSuggestions(actions, otherResources) {
