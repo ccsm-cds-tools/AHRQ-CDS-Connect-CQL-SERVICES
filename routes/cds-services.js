@@ -231,19 +231,20 @@ async function call(req, res, next) {
       let card = {
         summary: action.title,
         detail: action.description,
+        uuid: Math.floor(100000 + Math.random() * 900000), // Cards must have a uuid for suggestions to render properly
         indicator: getIndicator(action.priority),
         source: sources.slice(0,1),
         selectionBehavior: action.selectionBehavior,
-        suggestion: action.action ? extractSuggestions(action.action, otherResources) : 
-          {
+        suggestions: action.action ? extractSuggestions(action.action, otherResources) : 
+          [{
             label: action.title,
             uuid: action.id,
-            actions: {
+            actions: [{
               type: 'create',
               description: action.description ?? action.title,
               resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null
-            }
-          },
+            }]
+          }],
         links: sources.slice(1)?.map(s => ({...s,type:'absolute'}))
       };     
       cards.push(card);
@@ -256,7 +257,7 @@ async function call(req, res, next) {
     console.log('--------------------------------------------------');
     console.log('Suggestions:');
     cards.forEach(card => {
-      console.log(card.suggestion);
+      console.log(card.suggestions);
     });
     console.log();
     
@@ -494,18 +495,11 @@ function extractSuggestions(actions, otherResources) {
       label: action.title,
       uuid: action.id,
       actions: action?.action ? extractSubactions(action.action, resolver) :
-        {
+        [{
           type: action?.type ?? 'create',
           description: action?.description,
           resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null,
-        }
-      // resource: action?.resource?.reference ? 
-      //   [{
-      //     type: 'create',
-      //     description: action.description,
-      //     resource: resolver(action.resource.reference)[0],
-      //   }] : 
-      //   []
+        }]
     });
   }
   return suggestions;
