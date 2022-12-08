@@ -147,7 +147,7 @@ async function call(req, res, next) {
 
   // Clean prefetch before logging
   let body = cloneDeep(req?.body);
-  Object.entries(body.prefetch).forEach(([key,value]) => {
+  Object.entries(req?.body?.prefetch ?? {}).forEach(([key,value]) => {
     if (value?.resourceType !== 'Bundle') {
       body.prefetch[key] = {
         id: value.id,
@@ -469,8 +469,7 @@ function getSources(relatedArtifacts) {
   return sources;
 }
 
-function extractCards(actions, otherResources) {
-  let cards = [];
+function extractCards(actions, otherResources, cards=[]) {
   // For each action in the array
   for (const action of actions) {
     // If action.resource.reference contains a CommunicationRequest
@@ -484,7 +483,7 @@ function extractCards(actions, otherResources) {
       cards.push(extractSuggestions(action, otherResources));
     // Else if sub-action exists, call extractCard on the sub-action
     } else if (action.action) {
-      cards.push(extractCards(action.action, otherResources));
+      cards = extractCards(action.action, otherResources, cards);
     }
   }
   return cards;
