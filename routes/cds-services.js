@@ -225,56 +225,39 @@ async function call(req, res, next) {
       valueSetJson
     };
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
-    resolver = simpleResolver([...otherResources], true);
-    
     
     // If RequestGroup has an action
     if (RequestGroup?.action) {
   
       // Pass action array into extractCards recursive function
-      let newCards = extractCards(RequestGroup.action, resolver);
-      
-      // For each action in the array
-
-      // If action.resource.reference contains a CommunicationRequest
-      // Make an information card with that action (pass into extractInformation)
-
-      // If action.selection behavior exists
-      // Make a suggestion card with the kids as suggestions (pass kids into extractSuggetsions)
-      // If they are a Service Request, add a suggestion with an action with a resource
-
-      // Else if action exists, call Extract card on the action
-
-      // Return all types of cards and then add them to the cards array
-      
-      // Communication request - create a new card where the detail on the card becomes a payload
-      // If you see an action with selection behavior, each of those are suggestions with a card
-    
+      let newCards = extractCards(RequestGroup.action, otherResources).flat();
+      cards.push(...newCards);
+      console.log('Final cards', cards);
     }
 
-    for (const action of RequestGroup.action[0].action) {
-      let sources = action?.documentation ? getSources(action.documentation) : [];
-      let card = {
-        summary: action.title,
-        detail: action.description,
-        uuid: Math.floor(100000 + Math.random() * 900000), // Cards must have a uuid for suggestions to render properly
-        indicator: getIndicator(action.priority),
-        source: sources.slice(0,1),
-        selectionBehavior: action.selectionBehavior,
-        suggestions: action.action ? extractSuggestions(action.action, otherResources) : 
-          [{
-            label: action.title,
-            uuid: action.id,
-            actions: [{
-              type: 'create',
-              description: action.description ?? action.title,
-              resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null
-            }]
-          }],
-        links: sources.slice(1)?.map(s => ({...s,type:'absolute'}))
-      };     
-      cards.push(card);
-    }
+    // for (const action of RequestGroup.action[0].action) {
+    //   let sources = action?.documentation ? getSources(action.documentation) : [];
+    //   let card = {
+    //     summary: action.title,
+    //     detail: action.description,
+    //     uuid: Math.floor(100000 + Math.random() * 900000), // Cards must have a uuid for suggestions to render properly
+    //     indicator: getIndicator(action.priority),
+    //     source: sources.slice(0,1),
+    //     selectionBehavior: action.selectionBehavior,
+    //     suggestions: action.action ? extractSuggestions(action.action, otherResources) : 
+    //       [{
+    //         label: action.title,
+    //         uuid: action.id,
+    //         actions: [{
+    //           type: 'create',
+    //           description: action.description ?? action.title,
+    //           resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null
+    //         }]
+    //       }],
+    //     links: sources.slice(1)?.map(s => ({...s,type:'absolute'}))
+    //   };     
+    //   cards.push(card);
+    // }
 
     console.log('--------------------------------------------------');
     console.log('Cards returned from CDS:');
@@ -513,18 +496,17 @@ function getSources(relatedArtifacts) {
   return sources;
 }
 
-function extractCards(actions, resolver) {
+function extractCards(actions, otherResources) {
 
+  let cards = [];
   // For each action in the array
   for (const action of actions) {
-
-    let cards = [];
 
     // If action.resource.reference contains a CommunicationRequest
     if (action.resource?.reference && action.resource?.reference.includes('CommunicationRequest')) {
     
       // Make an information card with that action (pass into extractInformation)
-      cards.push(extractInformation(action));
+      cards.push(extractInformation(action, otherResources));
 
     // If action.selection behavior exists
     } else if (action.selectionBehavior) {
@@ -534,40 +516,33 @@ function extractCards(actions, resolver) {
 
     // Else if sub-action exists, call Extract card on the action
     } else if (action.action) {
-      extractCards(action.action);
+      cards.push(extractCards(action.action, otherResources));
     }
-
-    // Return all types of cards
-
   }
-
+  return cards;
 }
 
-function extractInformation(action, resolver) {
-
+function extractInformation(action, otherResources) {
+  let resolver = simpleResolver([...otherResources], true);
   let sources = action?.documentation ? getSources(action.documentation) : [];
   let card = {
     summary: action.title,
-    detail: action.description,
-    uuid: Math.floor(100000 + Math.random() * 900000), // Cards must have a uuid for suggestions to render properly
+    uuid: action.id, // Cards must have a uuid for cards to render properly
     indicator: getIndicator(action.priority),
     source: sources.slice(0,1),
-    selectionBehavior: action.selectionBehavior,
-    suggestions: action.action ? extractSuggestions(action.action, otherResources) : 
-      [{
-        label: action.title,
-        uuid: action.id,
-        actions: [{
-          type: 'create',
-          description: action.description ?? action.title,
-          resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null
-        }]
-      }],
-    links: sources.slice(1)?.map(s => ({...s,type:'absolute'}))
-  };     
-  // cards.push(card);
-
+    links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
+    // Communication Request payload that makes up the main contents of the card
+    detail: resolver(action.resource.reference)[0]?.payload[0].contentString ?? null
+  }; 
+  return card;
 }
+
+// function extractSuggestions(actions, otherResources) {
+//   let resolver = simpleResolver([...otherResources], true);
+//   let suggestions = [];
+
+
+// }
 
 
 function extractSuggestions(actions, otherResources) {
