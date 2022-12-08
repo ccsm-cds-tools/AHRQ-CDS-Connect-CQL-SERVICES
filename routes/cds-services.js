@@ -147,7 +147,7 @@ async function call(req, res, next) {
 
   // Clean prefetch before logging
   let body = cloneDeep(req?.body);
-  Object.entries(body.prefetch).forEach(([key,value]) => {
+  Object.entries(req?.body?.prefetch ?? {}).forEach(([key,value]) => {
     if (value?.resourceType !== 'Bundle') {
       body.prefetch[key] = {
         id: value.id,
@@ -225,18 +225,11 @@ async function call(req, res, next) {
       valueSetJson
     };
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
-    for (const action of RequestGroup.action) {
-      let sources = action?.documentation ? getSources(action.documentation) : [];
-      let card = {
-        summary: action.title,
-        detail: action.description,
-        indicator: getIndicator(action.priority),
-        source: sources.slice(0,1),
-        selectionBehavior: action.selectionBehavior,
-        suggestion: extractSuggestions(action.action, otherResources),
-        links: sources.slice(1)?.map(s => ({...s,type:'absolute'}))
-      };     
-      cards.push(card);
+    // If RequestGroup has an action
+    if (RequestGroup?.action) {
+      // Pass action array into extractCards recursive function
+      let newCards = extractCards(RequestGroup.action, otherResources).flat();
+      cards.push(...newCards);
     }
 
     console.log('--------------------------------------------------');
@@ -246,7 +239,7 @@ async function call(req, res, next) {
     console.log('--------------------------------------------------');
     console.log('Suggestions:');
     cards.forEach(card => {
-      console.log(card.suggestion);
+      console.log(card.suggestions);
     });
     console.log();
     
@@ -476,36 +469,73 @@ function getSources(relatedArtifacts) {
   return sources;
 }
 
-function extractSuggestions(actions, otherResources) {
-  let resolver = simpleResolver([...otherResources], true);
-  let suggestions = [];
+function extractCards(actions, otherResources, cards=[]) {
+  // For each action in the array
   for (const action of actions) {
-    suggestions.push({
-      label: action.title,
-      uuid: action.id,
-      actions: action?.action ? extractSubactions(action.action, resolver) : [],
-      resource: action?.resource?.reference ? 
-        [{
-          type: 'create',
-          description: action.description,
-          resource: resolver(action.resource.reference)[0],
-        }] : 
-        []
-    });
+    // If action.resource.reference contains a CommunicationRequest
+    if (action.resource?.reference && action.resource?.reference?.includes('CommunicationRequest')) {
+      // Make an information card with that action (pass into extractInformation)
+      cards.push(extractInformation(action, otherResources));
+    // If action.selection behavior exists
+    } else if (action.selectionBehavior) {
+      // Make a suggestion card with the children actions as suggestions (pass children into extractSuggetsions)
+      // If child action is a Service Request, add a suggestion with an action with a resource
+      cards.push(extractSuggestions(action, otherResources));
+    // Else if sub-action exists, call extractCard on the sub-action
+    } else if (action.action) {
+      cards = extractCards(action.action, otherResources, cards);
+    }
   }
-  return suggestions;
+  return cards;
 }
 
-function extractSubactions(actionAction, resolver) {
-  let subactions = [];
-  for (const a2 of actionAction) {
-    subactions.push({
-      type: 'create',
-      description: a2.description ?? a2.title,
-      resource: a2?.resource?.reference ? resolver(a2.resource.reference)[0] : null
-    });
+function extractInformation(action, otherResources) {
+  let resolver = simpleResolver([...otherResources], true);
+  let sources = action?.documentation ? getSources(action.documentation) : [];
+  let card = {
+    summary: action.title,
+    uuid: action.id, // Cards must have a uuid to render properly
+    indicator: getIndicator(action.priority),
+    source: sources.slice(0,1),
+    links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
+    // Communication Request payload makes up the main contents of the card
+    detail: resolver(action.resource.reference)[0]?.payload[0].contentString ?? null
+  }; 
+  return card;
+}
+
+function extractSuggestions(action, otherResources) {
+  let resolver = simpleResolver([...otherResources], true);
+  let sources = action?.documentation ? getSources(action.documentation) : [];
+  let suggestions = [];
+  for (const subaction of action.action) {
+    if (subaction.resource?.reference?.includes('ServiceRequest')) {
+      let suggestion = {
+        label: subaction.title,
+        uuid: subaction.id,
+        actions: [{
+          type: subaction.type ?? 'create',
+          description: subaction.description ?? subaction.title,
+          resourceId: subaction.resource?.reference ?? null,
+          resource: resolver(subaction.resource.reference)[0] ?? null
+        }]
+      };
+      suggestions.push(suggestion);
+    }
   }
-  return subactions;
+
+  let card = {
+    summary: action.title,
+    detail: action.description,
+    uuid: action.id, // Cards must have a uuid to render properly
+    indicator: getIndicator(action.priority),
+    source: sources.slice(0,1),
+    selectionBehavior: action.selectionBehavior,
+    links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
+    // Service Requests in the subaction make up the suggestions
+    suggestions: suggestions
+  };   
+  return card;  
 }
 
 export default router;
