@@ -225,10 +225,8 @@ async function call(req, res, next) {
       valueSetJson
     };
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
-    
     // If RequestGroup has an action
     if (RequestGroup?.action) {
-  
       // Pass action array into extractCards recursive function
       let newCards = extractCards(RequestGroup.action, otherResources).flat();
       cards.push(...newCards);
@@ -497,7 +495,7 @@ function extractInformation(action, otherResources) {
   let sources = action?.documentation ? getSources(action.documentation) : [];
   let card = {
     summary: action.title,
-    uuid: action.id, // Cards must have a uuid for cards to render properly
+    uuid: action.id, // Cards must have a uuid to render properly
     indicator: getIndicator(action.priority),
     source: sources.slice(0,1),
     links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
@@ -530,7 +528,7 @@ function extractSuggestions(action, otherResources) {
   let card = {
     summary: action.title,
     detail: action.description,
-    uuid: action.id, // Cards must have a uuid for suggestions to render properly
+    uuid: action.id, // Cards must have a uuid to render properly
     indicator: getIndicator(action.priority),
     source: sources.slice(0,1),
     selectionBehavior: action.selectionBehavior,
