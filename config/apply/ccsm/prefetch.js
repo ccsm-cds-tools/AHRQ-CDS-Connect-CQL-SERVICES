@@ -1,6 +1,6 @@
 export const prefetch = {
   "Patient": "Patient/{{context.patientId}}",
-  "ObservationCore": "Observation?patient={{context.patientId}}&category=core+characteristics",
+  "ObservationCore": "Observation?patient={{context.patientId}}&category=core-characteristics",
   "ObservationLab": "Observation?patient={{context.patientId}}&category=laboratory",
   "ObservationLabor": "Observation?patient={{context.patientId}}&category=labor-delivery",
   "ObservationObGyn": "Observation?patient={{context.patientId}}&category=obstetrics-gynecology",
