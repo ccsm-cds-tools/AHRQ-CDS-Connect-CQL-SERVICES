@@ -503,7 +503,7 @@ function extractCards(actions, otherResources) {
   for (const action of actions) {
 
     // If action.resource.reference contains a CommunicationRequest
-    if (action.resource?.reference && action.resource?.reference.includes('CommunicationRequest')) {
+    if (action.resource?.reference && action.resource?.reference?.includes('CommunicationRequest')) {
     
       // Make an information card with that action (pass into extractInformation)
       cards.push(extractInformation(action, otherResources));
@@ -513,6 +513,7 @@ function extractCards(actions, otherResources) {
 
       // Make a suggestion card with the kids as suggestions (pass kids into extractSuggetsions)
       // If they are a Service Request, add a suggestion with an action with a resource
+      cards.push(extractSuggestions(action, otherResources));
 
     // Else if sub-action exists, call Extract card on the action
     } else if (action.action) {
@@ -531,48 +532,75 @@ function extractInformation(action, otherResources) {
     indicator: getIndicator(action.priority),
     source: sources.slice(0,1),
     links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
-    // Communication Request payload that makes up the main contents of the card
+    // Communication Request payload makes up the main contents of the card
     detail: resolver(action.resource.reference)[0]?.payload[0].contentString ?? null
   }; 
   return card;
 }
 
+function extractSuggestions(action, otherResources) {
+  let resolver = simpleResolver([...otherResources], true);
+  let sources = action?.documentation ? getSources(action.documentation) : [];
+  let suggestions = [];
+
+  for (const subaction of action.action) {
+    if (subaction.resource?.reference?.includes('ServiceRequest')) {
+      let suggestion = {
+        label: subaction.title,
+        uuid: subaction.id,
+        actions: [{
+          type: subaction.type ?? 'create',
+          description: subaction.description ?? subaction.title,
+          resourceId: subaction.resource?.reference ?? null,
+          resource: resolver(subaction.resource.reference)[0] ?? null
+        }]
+      };
+      suggestions.push(suggestion);
+    }
+  }
+
+  let card = {
+    summary: action.title,
+    detail: action.description,
+    uuid: action.id, // Cards must have a uuid for suggestions to render properly
+    indicator: getIndicator(action.priority),
+    source: sources.slice(0,1),
+    selectionBehavior: action.selectionBehavior,
+    links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
+    // Service Requests in the subaction make up the suggestions
+    suggestions: suggestions
+  };   
+  return card;  
+}
+
 // function extractSuggestions(actions, otherResources) {
 //   let resolver = simpleResolver([...otherResources], true);
 //   let suggestions = [];
-
-
+//   for (const action of actions) {
+//     suggestions.push({
+//       label: action.title,
+//       uuid: action.id,
+//       actions: action?.action ? extractSubactions(action.action, resolver) :
+//         [{
+//           type: action?.type ?? 'create',
+//           description: action?.description,
+//           resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null,
+//         }]
+//     });
+//   }
+//   return suggestions;
 // }
 
-
-function extractSuggestions(actions, otherResources) {
-  let resolver = simpleResolver([...otherResources], true);
-  let suggestions = [];
-  for (const action of actions) {
-    suggestions.push({
-      label: action.title,
-      uuid: action.id,
-      actions: action?.action ? extractSubactions(action.action, resolver) :
-        [{
-          type: action?.type ?? 'create',
-          description: action?.description,
-          resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null,
-        }]
-    });
-  }
-  return suggestions;
-}
-
-function extractSubactions(actionAction, resolver) {
-  let subactions = [];
-  for (const a2 of actionAction) {
-    subactions.push({
-      type: 'create',
-      description: a2.description ?? a2.title,
-      resource: a2?.resource?.reference ? resolver(a2.resource.reference)[0] : null
-    });
-  }
-  return subactions;
-}
+// function extractSubactions(actionAction, resolver) {
+//   let subactions = [];
+//   for (const a2 of actionAction) {
+//     subactions.push({
+//       type: 'create',
+//       description: a2.description ?? a2.title,
+//       resource: a2?.resource?.reference ? resolver(a2.resource.reference)[0] : null
+//     });
+//   }
+//   return subactions;
+// }
 
 export default router;
