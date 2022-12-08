@@ -232,32 +232,7 @@ async function call(req, res, next) {
       // Pass action array into extractCards recursive function
       let newCards = extractCards(RequestGroup.action, otherResources).flat();
       cards.push(...newCards);
-      console.log('Final cards', cards);
     }
-
-    // for (const action of RequestGroup.action[0].action) {
-    //   let sources = action?.documentation ? getSources(action.documentation) : [];
-    //   let card = {
-    //     summary: action.title,
-    //     detail: action.description,
-    //     uuid: Math.floor(100000 + Math.random() * 900000), // Cards must have a uuid for suggestions to render properly
-    //     indicator: getIndicator(action.priority),
-    //     source: sources.slice(0,1),
-    //     selectionBehavior: action.selectionBehavior,
-    //     suggestions: action.action ? extractSuggestions(action.action, otherResources) : 
-    //       [{
-    //         label: action.title,
-    //         uuid: action.id,
-    //         actions: [{
-    //           type: 'create',
-    //           description: action.description ?? action.title,
-    //           resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null
-    //         }]
-    //       }],
-    //     links: sources.slice(1)?.map(s => ({...s,type:'absolute'}))
-    //   };     
-    //   cards.push(card);
-    // }
 
     console.log('--------------------------------------------------');
     console.log('Cards returned from CDS:');
@@ -497,25 +472,19 @@ function getSources(relatedArtifacts) {
 }
 
 function extractCards(actions, otherResources) {
-
   let cards = [];
   // For each action in the array
   for (const action of actions) {
-
     // If action.resource.reference contains a CommunicationRequest
     if (action.resource?.reference && action.resource?.reference?.includes('CommunicationRequest')) {
-    
       // Make an information card with that action (pass into extractInformation)
       cards.push(extractInformation(action, otherResources));
-
     // If action.selection behavior exists
     } else if (action.selectionBehavior) {
-
-      // Make a suggestion card with the kids as suggestions (pass kids into extractSuggetsions)
-      // If they are a Service Request, add a suggestion with an action with a resource
+      // Make a suggestion card with the children actions as suggestions (pass children into extractSuggetsions)
+      // If child action is a Service Request, add a suggestion with an action with a resource
       cards.push(extractSuggestions(action, otherResources));
-
-    // Else if sub-action exists, call Extract card on the action
+    // Else if sub-action exists, call extractCard on the sub-action
     } else if (action.action) {
       cards.push(extractCards(action.action, otherResources));
     }
@@ -542,7 +511,6 @@ function extractSuggestions(action, otherResources) {
   let resolver = simpleResolver([...otherResources], true);
   let sources = action?.documentation ? getSources(action.documentation) : [];
   let suggestions = [];
-
   for (const subaction of action.action) {
     if (subaction.resource?.reference?.includes('ServiceRequest')) {
       let suggestion = {
@@ -572,35 +540,5 @@ function extractSuggestions(action, otherResources) {
   };   
   return card;  
 }
-
-// function extractSuggestions(actions, otherResources) {
-//   let resolver = simpleResolver([...otherResources], true);
-//   let suggestions = [];
-//   for (const action of actions) {
-//     suggestions.push({
-//       label: action.title,
-//       uuid: action.id,
-//       actions: action?.action ? extractSubactions(action.action, resolver) :
-//         [{
-//           type: action?.type ?? 'create',
-//           description: action?.description,
-//           resource: action?.resource?.reference ? resolver(action.resource.reference)[0] : null,
-//         }]
-//     });
-//   }
-//   return suggestions;
-// }
-
-// function extractSubactions(actionAction, resolver) {
-//   let subactions = [];
-//   for (const a2 of actionAction) {
-//     subactions.push({
-//       type: 'create',
-//       description: a2.description ?? a2.title,
-//       resource: a2?.resource?.reference ? resolver(a2.resource.reference)[0] : null
-//     });
-//   }
-//   return subactions;
-// }
 
 export default router;
