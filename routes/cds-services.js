@@ -472,6 +472,7 @@ function getSources(relatedArtifacts) {
 function extractCards(actions, otherResources, cards=[]) {
   // For each action in the array
   for (const action of actions) {
+    console.log('action: ', action);
     // If action.resource.reference contains a CommunicationRequest
     if (action.resource?.reference && action.resource?.reference?.includes('CommunicationRequest')) {
       // Make an information card with that action (pass into extractInformation)
@@ -491,12 +492,12 @@ function extractCards(actions, otherResources, cards=[]) {
 
 function extractInformation(action, otherResources) {
   let resolver = simpleResolver([...otherResources], true);
-  let sources = action?.documentation ? getSources(action.documentation) : [];
+  let sources = action?.documentation ? getSources(action.documentation) : [{label:'no source listed'}];
   let card = {
     summary: action.title,
     uuid: action.id, // Cards must have a uuid to render properly
     indicator: getIndicator(action.priority),
-    source: sources.slice(0,1),
+    source: sources[0],
     links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
     // Communication Request payload makes up the main contents of the card
     detail: resolver(action.resource.reference)[0]?.payload[0].contentString ?? null
@@ -506,7 +507,7 @@ function extractInformation(action, otherResources) {
 
 function extractSuggestions(action, otherResources) {
   let resolver = simpleResolver([...otherResources], true);
-  let sources = action?.documentation ? getSources(action.documentation) : [];
+  let sources = action?.documentation ? getSources(action.documentation) : [{label:'no source listed'}];
   let suggestions = [];
   for (const subaction of action.action) {
     if (subaction.resource?.reference?.includes('ServiceRequest')) {
@@ -529,7 +530,7 @@ function extractSuggestions(action, otherResources) {
     detail: action.description,
     uuid: action.id, // Cards must have a uuid to render properly
     indicator: getIndicator(action.priority),
-    source: sources.slice(0,1),
+    source: sources[0],
     selectionBehavior: action.selectionBehavior,
     links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
     // Service Requests in the subaction make up the suggestions
