@@ -452,7 +452,7 @@ function getIndicator(priority) {
     case 'urgent': return 'warning';
     case 'asap': return 'critical';
     case 'stat': return 'critical';
-    default: return null;
+    default: return 'info';
   }
 }
 
