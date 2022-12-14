@@ -531,12 +531,16 @@ function extractSuggestions(action, otherResources) {
     uuid: action.id, // Cards must have a uuid to render properly
     indicator: getIndicator(action.priority),
     source: sources[0],
-    selectionBehavior: action.selectionBehavior,
+    selectionBehavior: getSelectionBehavior(action.selectionBehavior),
     links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
     // Service Requests in the subaction make up the suggestions
     suggestions: suggestions
   };   
   return card;  
+}
+
+function getSelectionBehavior(sb) {
+  return 'any';
 }
 
 export default router;
