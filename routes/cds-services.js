@@ -511,6 +511,8 @@ function extractSuggestions(action, otherResources) {
   let suggestions = [];
   for (const subaction of action.action) {
     if (subaction.resource?.reference?.includes('ServiceRequest')) {
+      let rsrc = resolver(subaction.resource.reference)[0] ?? {};
+      rsrc.status = 'draft';
       let suggestion = {
         label: subaction.title,
         uuid: subaction.id,
@@ -518,7 +520,7 @@ function extractSuggestions(action, otherResources) {
           type: subaction.type ?? 'create',
           description: subaction.description ?? subaction.title,
           resourceId: subaction.resource?.reference ?? null,
-          resource: resolver(subaction.resource.reference)[0] ?? null
+          resource: rsrc ?? null
         }]
       };
       suggestions.push(suggestion);
