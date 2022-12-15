@@ -513,6 +513,10 @@ function extractSuggestions(action, otherResources) {
     if (subaction.resource?.reference?.includes('ServiceRequest')) {
       let rsrc = resolver(subaction.resource.reference)[0] ?? {};
       rsrc.status = 'draft';
+      if (rsrc?.code?.display) {
+        rsrc.code.text = rsrc.code.display;
+        delete rsrc.code.display;
+      }
       let suggestion = {
         label: subaction.title,
         uuid: subaction.id,
