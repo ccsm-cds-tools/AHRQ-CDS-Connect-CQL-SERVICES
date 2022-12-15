@@ -239,7 +239,7 @@ async function call(req, res, next) {
     console.log('--------------------------------------------------');
     console.log('Suggestions:');
     cards.forEach(card => {
-      console.log(card.suggestions);
+      console.log(JSON.stringify(card.suggestions, null, 2));
     });
     console.log();
     
