@@ -512,10 +512,24 @@ function extractSuggestions(action, otherResources) {
   for (const subaction of action.action) {
     if (subaction.resource?.reference?.includes('ServiceRequest')) {
       let rsrc = resolver(subaction.resource.reference)[0] ?? {};
+      // Add necessary fields to Service Request resource
       rsrc.status = 'draft';
       if (rsrc?.code?.display) {
         rsrc.code.text = rsrc.code.display;
         delete rsrc.code.display;
+      }
+      if (!rsrc?.category) {
+        rsrc.category = [
+          {
+            coding: [
+              {
+                system: 'http://snomed.info/sct',
+                code: '108252007',
+                display: 'Laboratory procedure'
+              }
+            ]
+          }
+        ];
       }
       let suggestion = {
         label: subaction.title,
