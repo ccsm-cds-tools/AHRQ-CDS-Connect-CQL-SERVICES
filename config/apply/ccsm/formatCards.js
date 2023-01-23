@@ -54,21 +54,36 @@ function extractSuggestions(action, otherResources) {
           {
             coding: [
               {
-                system: 'http://snomed.info/sct',
-                code: '108252007',
-                display: 'Laboratory procedure'
+                system: 'http://terminology.hl7.org/CodeSystem/medicationrequest-category',
+                code: 'inpatient',
+                display: 'Inpatient'
               }
             ]
           }
         ];
       }
+      rsrc = {
+        resourceType: rsrc.resourceType,
+        status: rsrc.status,
+        intent: 'proposal',
+        category: rsrc.category,
+        code: {
+          coding: [
+            {
+              code: rsrc.code.coding[0].code,
+              system: rsrc.code.coding[0].system
+            }
+          ],
+          text: rsrc.code.text
+        },
+        subject: rsrc.subject
+      };
       let suggestion = {
         label: subaction.title,
         uuid: subaction.id,
         actions: [{
           type: subaction.type ?? 'create',
           description: subaction.description ?? subaction.title,
-          resourceId: subaction.resource?.reference ?? null,
           resource: rsrc ?? null
         }]
       };
