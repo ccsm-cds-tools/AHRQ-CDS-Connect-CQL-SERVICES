@@ -49,24 +49,24 @@ function extractSuggestions(action, otherResources) {
         rsrc.code.text = rsrc.code.display;
         delete rsrc.code.display;
       }
-      if (!rsrc?.category) {
-        rsrc.category = [
-          {
-            coding: [
-              {
-                system: 'http://terminology.hl7.org/CodeSystem/medicationrequest-category',
-                code: 'inpatient',
-                display: 'Inpatient'
-              }
-            ]
-          }
-        ];
-      }
+      
+      let category = [
+        {
+          coding: [
+            {
+              system: 'http://terminology.hl7.org/CodeSystem/medicationrequest-category',
+              code: 'outpatient',
+              display: 'Outpatient'
+            }
+          ]
+        }
+      ];
+
       rsrc = {
         resourceType: rsrc.resourceType,
         status: rsrc.status,
         intent: 'proposal',
-        category: rsrc.category,
+        category: category,
         code: {
           coding: [
             {
