@@ -46,12 +46,12 @@ export const elmJsonDependencies = elmJsonDependencyArray.reduce((acc, elm) => {
       return {
         ...r,
         id: r.id.split('/').pop()
-      }
+      };
     });
     elm.library.valueSets.def = refs;
   }
   return {
     ...acc,
     [elm.library.identifier.id]: elm
-  }
+  };
 }, {});
