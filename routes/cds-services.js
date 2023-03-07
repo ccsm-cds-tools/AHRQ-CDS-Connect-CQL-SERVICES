@@ -215,17 +215,22 @@ async function call(req, res, next) {
 
   let cards= [];
   if (res.locals?.apply) { // $apply a PlanDefinition
+
+    // Gather resources
     let patientData = bundle.entry.map(b => b.resource);
     const { elmJson, cdsResources, valueSetJson, formatCards } = res.locals.apply;
     let resolver = simpleResolver([...cdsResources, ...patientData], true);
     const planDefinition = resolver('PlanDefinition/' + hook._config.apply.planDefinition)[0];
     const patientReference = 'Patient/' + patientData.filter(pd => pd.resourceType === 'Patient').map(pd => pd.id)[0];
+
+    // Run Encender applyAndMerge() operation
     const aux = {
       elmJsonDependencies: elmJson,
       valueSetJson
     };
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
-    // If RequestGroup has an action
+
+    // If RequestGroup has actions, convert them to properly-formatted CDS Hooks cards
     if (RequestGroup?.action) {
       // Pass action array into extractCards recursive function
       let newCards = formatCards(RequestGroup.action, otherResources).flat();
