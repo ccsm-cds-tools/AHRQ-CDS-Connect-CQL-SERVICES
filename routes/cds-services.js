@@ -13,6 +13,8 @@ import hooksLoader from '../lib/hooks-loader.js';
 import { get as _get } from '../lib/libraries-loader.js';
 import { get as getAppliable } from '../lib/apply-loader.js';
 
+/* eslint-disable no-console */
+
 // Middleware to setup response headers with CORS
 router.use((request, response, next) => {
   response.set({
@@ -156,9 +158,9 @@ async function call(req, res, next) {
     }
   });
 
-  console.log('--------------------------------------------------');
-  console.log('Request body:');
-  console.log(body);
+  // console.log('--------------------------------------------------');
+  // console.log('Request body:');
+  // console.log(body);
 
   // Build up a single bundle representing all data
   const bundle = {
@@ -166,10 +168,13 @@ async function call(req, res, next) {
     type: 'collection',
     entry: []
   };
+  // console.log(hook);
+  // console.log(req);
+  // console.log(res);
   if (hook.prefetch) {
     // Create a FHIR client in case we need to call out to the FHIR server
     const client = getFHIRClient(req, res);
-    let searchRequests = [];
+    // let searchRequests = [];
     // Iterate through the prefetch keys to determine if they are supplied or if we need to query for the data
     for (const key of Object.keys(hook.prefetch)) {
       const pf = req.body.prefetch[key];
@@ -196,7 +201,33 @@ async function call(req, res, next) {
       }
     }
     // Wait for any open requests to finish, returning if there is an error
-    searchRequests = [];
+    // searchRequests = [];
+    // try {
+    //   await Promise.all(searchRequests);
+    // } catch(err) {
+    //   res.sendStatus(412);
+    //   return;
+    // }
+  }
+
+  console.log(req.app.locals);
+  if (req.app.locals.altFhirQueries?.length > 0) {
+    const client = getFHIRClient(req, res);
+    let searchRequests = [];
+    req.app.locals.altFhirQueries.forEach(afq => {
+      let searchURL = afq;
+      // Replace the context placeholders in the queries
+      Object.keys(req.body.context || {}).forEach(contextKey => {
+        searchURL = searchURL.split(`{{context.${contextKey}}}`).join(req.body.context[contextKey]);
+      });
+      console.log(searchURL);
+      const searchRequest = client.request(afq, { pageLimit: 0, flat: true })
+        .then(result => {
+          console.log('result: ', result);
+          addResponseToBundle(result, bundle);
+        });
+      searchRequests.push(searchRequest);
+    });
     try {
       await Promise.all(searchRequests);
     } catch(err) {
@@ -218,7 +249,7 @@ async function call(req, res, next) {
 
     // Gather resources
     let patientData = bundle.entry.map(b => b.resource);
-    const { elmJson, cdsResources, valueSetJson, formatCards } = res.locals.apply;
+    const { elmJson, cdsResources, valueSetJson, formatCards, collapseIntoOne } = res.locals.apply;
     let resolver = simpleResolver([...cdsResources, ...patientData], true);
     const planDefinition = resolver('PlanDefinition/' + hook._config.apply.planDefinition)[0];
     const patientReference = 'Patient/' + patientData.filter(pd => pd.resourceType === 'Patient').map(pd => pd.id)[0];
@@ -237,16 +268,20 @@ async function call(req, res, next) {
       cards.push(...newCards);
     }
 
-    console.log('--------------------------------------------------');
-    console.log('Cards returned from CDS:');
-    console.log(cards);
+    if (res.app.locals.collapseCards) {
+      cards = collapseIntoOne(cards);
+    }
 
-    console.log('--------------------------------------------------');
-    console.log('Suggestions:');
-    cards.forEach(card => {
-      console.log(JSON.stringify(card.suggestions, null, 2));
-    });
-    console.log();
+    // console.log('--------------------------------------------------');
+    // console.log('Cards returned from CDS:');
+    // console.log(cards);
+
+    // console.log('--------------------------------------------------');
+    // console.log('Suggestions:');
+    // cards.forEach(card => {
+    //   console.log(JSON.stringify(card.suggestions, null, 2));
+    // });
+    // console.log();
     
   } else { // Evaluate CQL expressions (not tied to any PlanDefinition)
 
@@ -345,6 +380,7 @@ async function call(req, res, next) {
 }
 
 function getFHIRClient(req, res) {
+  console.log("req body:", req.body);
   if (req.body.fhirServer) {
     const state = {
       serverUrl: req.body.fhirServer,

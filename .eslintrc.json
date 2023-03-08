@@ -12,6 +12,9 @@
         "node": true,
         "mocha": true
     },
-    "parserOptions": {"sourceType": "module"},
+    "parserOptions": {
+        "sourceType": "module",
+        "ecmaVersion": 2022
+    },
     "extends": ["eslint:recommended"]
 }
