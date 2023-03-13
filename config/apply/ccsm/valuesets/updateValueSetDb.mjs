@@ -65,7 +65,7 @@ Promise.all(logicLibraries.map(logLib => codeService.ensureValueSetsInLibraryWit
     }
 
     // And finally write the result to the real locations of the valueset-db.json.
-    const dbPath = join('src/services/valuesets/valueset-db.js');
+    const dbPath = join('config/apply/ccsm/valuesets/valueset-db.js');
     writeFileSync(dbPath, 'export const valueSetDb = ' + JSON.stringify(fixed, null, 2), 'utf8');
     console.log('Updated:', dbPath);
   })
