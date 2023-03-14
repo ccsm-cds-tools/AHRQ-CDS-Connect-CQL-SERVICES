@@ -1,13 +1,31 @@
 
 export function collapseIntoOne(cards) {
   let justOne = [{}];
-  let decisionAids = cards.filter(c => c.summary.includes('Decision Aids'));
-  if (decisionAids.length > 0) {
+  let decisionAids = cards.filter(c => c.summary.toLowerCase().includes('decision aids'));
+  let errors = cards.filter(c => c.summary.toLowerCase().includes('errors'));
+  if (errors.length > 0) {
+    justOne = [{
+      ...errors[0],
+      summary: 'CDS Error',
+      detail: errors[0].detail ?? 'The CDS has returned an error.'
+    }];
+  } else if (decisionAids.length > 0) {
     let aidObject = JSON.parse(decisionAids[0].detail);
     justOne = [{
       ...decisionAids[0],
       summary: aidObject.recommendation,
       detail: aidObject.recommendationDetails.join('\n\n')
+    }];
+  } else {
+    justOne = [{
+      summary: 'No Recommendation',
+      uuid: '1',
+      indicator: 'info',
+      source: {
+        label: 'no source listed'
+      },
+      links: [],
+      detail: 'No recommendation has been returned by the CDS.'
     }];
   }
   let patientHistory = cards.filter(c => c.summary.includes('history'));
