@@ -4,10 +4,11 @@ export function collapseIntoOne(cards) {
   let decisionAids = cards.filter(c => c.summary.toLowerCase().includes('decision aids'));
   let errors = cards.filter(c => c.summary.toLowerCase().includes('errors'));
   if (errors.length > 0) {
+    let errorObject = JSON.parse(errors[0].detail);
     justOne = [{
       ...errors[0],
       summary: 'CDS Error',
-      detail: errors[0].detail?.join('\n') ?? 'The CDS has returned an error.'
+      detail: errorObject.join('\n') ?? 'The CDS has returned an error.'
     }];
   } else if (decisionAids.length > 0) {
     let aidObject = JSON.parse(decisionAids[0].detail);
