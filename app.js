@@ -43,6 +43,8 @@ const PARAMS = {
   IGNORE_VSAC_ERRORS
 };
 
+console.log(PARAMS);
+
 const app = express();
 
 // view engine setup
