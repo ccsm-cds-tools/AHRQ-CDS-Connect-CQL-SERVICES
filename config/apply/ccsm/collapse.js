@@ -19,16 +19,20 @@ export function collapseIntoOne(cards) {
         '\n\n' +
         '### Patient History\n\n' +
         '#### Conditions\n\n' +
-        '* ' + histObject.patientHistory.conditions.join('\n\n* ') + '\n\n' +
+        '* ' + histObject.patientHistory.conditions.map(formatEntry).join('\n* ') + '\n\n' +
         '#### Observations\n\n' +
-        '* ' + histObject.patientHistory.observations.join('\n\n* ') + '\n\n' +
+        '* ' + histObject.patientHistory.observations.map(formatEntry).join('\n* ') + '\n\n' +
         '#### DiagnosticReports\n\n' +
-        '* ' + histObject.patientHistory.diagnosticReports.join('\n\n* ') + '\n\n' +
+        '* ' + histObject.patientHistory.diagnosticReports.map(formatEntry).join('\n* ') + '\n\n' +
         '#### Procedures\n\n' +
-        '* ' + histObject.patientHistory.procedures.join('\n\n* ') + '\n\n' +
+        '* ' + histObject.patientHistory.procedures.map(formatEntry).join('\n* ') + '\n\n' +
         '#### Immunizations\n\n' +
-        '* ' + histObject.patientHistory.immunizations.join('\n\n* ')
+        '* ' + histObject.patientHistory.immunizations.map(formatEntry).join('\n* ')
     }];
   }
   return justOne;
+}
+
+function formatEntry(ent) {
+  return ent.name + '(' + ent.date + '):' + ent.value;
 }
