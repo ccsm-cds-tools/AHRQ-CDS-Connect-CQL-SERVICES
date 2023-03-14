@@ -7,7 +7,7 @@ export function collapseIntoOne(cards) {
     justOne = [{
       ...errors[0],
       summary: 'CDS Error',
-      detail: errors[0].detail ?? 'The CDS has returned an error.'
+      detail: errors[0].detail?.join('\n') ?? 'The CDS has returned an error.'
     }];
   } else if (decisionAids.length > 0) {
     let aidObject = JSON.parse(decisionAids[0].detail);
@@ -52,5 +52,7 @@ export function collapseIntoOne(cards) {
 }
 
 function formatEntry(ent) {
-  return ent.name + '(' + ent.date + '):' + ent.value;
+  let entString = ent.name + ' (' + ent.date + '): ';
+  entString = ent.value ? entString + ent.value : entString + 'No result available';
+  return entString;
 }
