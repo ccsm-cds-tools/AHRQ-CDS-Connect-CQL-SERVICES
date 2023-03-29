@@ -28,7 +28,9 @@ const USE_HTTPS = process.env.CQL_SERVICES_USE_HTTPS ?? 'false';
 // Collapse cards down into a single information card
 const COLLAPSE_CARDS = process.env.COLLAPSE_CARDS ?? 'false';
 
-// Semi-colon separated list of alternative FHIR queries (full URLs)
+// Semi-colon separated list of alternative FHIR queries (full URLs).
+// Context tokens are used the same way they are with the prefetch.
+// See: https://cds-hooks.hl7.org/1.0/#prefetch-tokens
 const ALT_FHIR_QUERIES = process.env.ALT_FHIR_QUERIES ?? '';
 
 // Flag to ignore errors when connecting to VSAC
