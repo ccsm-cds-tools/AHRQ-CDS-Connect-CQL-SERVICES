@@ -31,16 +31,28 @@ const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
  * Check for CDS-specific configuration settings and set in app.locals if applicable
  */
 
-if (PARAMS?.IGNORE_VSAC_ERRORS.toLowerCase() === 'true') {
+if (PARAMS?.IGNORE_VSAC_ERRORS?.toLowerCase() === 'true') {
   app.locals.ignoreVSACErrors = true;
+} else {
+  app.locals.ignoreVSACErrors = false;
 }
 
-if (PARAMS?.COLLAPSE_CARDS.toLowerCase() === 'true') {
+if (PARAMS?.COLLAPSE_CARDS?.toLowerCase() === 'true') {
   app.locals.collapseCards = true;
+} else {
+  app.locals.collapseCards = false;
 }
 
 if (PARAMS?.ALT_FHIR_QUERIES?.length > 0) {
   app.locals.altFhirQueries = PARAMS.ALT_FHIR_QUERIES.split(';');
+} else {
+  app.locals.altFhirQueries = [];
+}
+
+if (PARAMS?.SMART_IF_NO_PREFETCH?.toLowerCase() === 'true') {
+  app.locals.smartIfNoPrefetch = true;
+} else {
+  app.locals.smartIfNoPrefetch = false;
 }
 
 /**

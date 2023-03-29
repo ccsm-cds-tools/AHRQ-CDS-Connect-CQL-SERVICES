@@ -180,11 +180,11 @@ async function call(req, res, next) {
   if (hook.prefetch) {
     // Create a FHIR client in case we need to call out to the FHIR server
     const client = getFHIRClient(req, res);
-    // let searchRequests = [];
+    let searchRequests = [];
     // Iterate through the prefetch keys to determine if they are supplied or if we need to query for the data
     for (const key of Object.keys(hook.prefetch)) {
       const pf = req.body.prefetch[key];
-      if (typeof pf === 'undefined') {
+      if (typeof pf === 'undefined' && req.app.locals.smartIfNoPrefetch) {
         // The prefetch was not provided, so use the FHIR client (if available) to request the data
         if (client == null) {
           res.sendStatus(412);
@@ -195,25 +195,23 @@ async function call(req, res, next) {
         Object.keys(req.body.context || {}).forEach(contextKey => {
           searchURL = searchURL.split(`{{context.${contextKey}}}`).join(req.body.context[contextKey]);
         });
-        // TODO: Uncomment
         // Perform the search and add the response to the bundle
-        // const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
-        //   .then(result => addResponseToBundle(result, bundle));
-        // // Push the promise onto the array so we can await it later
-        // searchRequests.push(searchRequest);
+        const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
+          .then(result => addResponseToBundle(result, bundle));
+        // Push the promise onto the array so we can await it later
+        searchRequests.push(searchRequest);
       } else {
         // The prefetch was supplied so just add it directly to the bundle
         addResponseToBundle(pf, bundle);
       }
     }
     // Wait for any open requests to finish, returning if there is an error
-    // searchRequests = [];
-    // try {
-    //   await Promise.all(searchRequests);
-    // } catch(err) {
-    //   res.sendStatus(412);
-    //   return;
-    // }
+    try {
+      await Promise.all(searchRequests);
+    } catch(err) {
+      res.sendStatus(412);
+      return;
+    }
   }
 
   console.log(req.app.locals);

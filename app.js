@@ -42,13 +42,17 @@ const ALT_FHIR_QUERIES = process.env.ALT_FHIR_QUERIES ?? '';
 // Flag to ignore errors when connecting to VSAC
 const IGNORE_VSAC_ERRORS = process.env.IGNORE_VSAC_ERRORS ?? 'false';
 
+// Flag to attempt a SMART connection if no prefetch is provided
+const SMART_IF_NO_PREFETCH = process.env.SMART_IF_NO_PREFETCH ?? 'false';
+
 const PARAMS = {
   PORT,
   LIMIT,
   USE_HTTPS,
   COLLAPSE_CARDS,
   ALT_FHIR_QUERIES,
-  IGNORE_VSAC_ERRORS
+  IGNORE_VSAC_ERRORS,
+  SMART_IF_NO_PREFETCH
 };
 
 console.log(PARAMS);
