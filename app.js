@@ -69,13 +69,13 @@ if(app.get('env') !== 'test') {
 app.use(cors());
 app.use(helmet());
 app.use(json({
-  LIMIT,
+  limit: LIMIT,
   type: function (msg)  {
     return msg.headers['content-type'] && msg.headers['content-type'].startsWith('application/json');
   }
 }));
 app.use(urlencoded({
-  LIMIT,
+  limit: LIMIT,
   extended: false
 }));
 app.use(cookieParser());

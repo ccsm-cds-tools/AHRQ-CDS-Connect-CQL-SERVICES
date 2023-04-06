@@ -214,21 +214,25 @@ async function call(req, res, next) {
     }
   }
 
-  console.log(req.app.locals);
+  // Alternative to FHIR queries can also be included via the ALT_FHIR_QUERIES env parameter
+  // (which maps to req.app.locals.altFhirQueries).
   if (req.app.locals.altFhirQueries?.length > 0) {
     const client = getFHIRClient(req, res);
     let searchRequests = [];
     req.app.locals.altFhirQueries.forEach(afq => {
+
+      const { translateResponse } = res.locals?.apply ? res.locals.apply : { translateResponse(input, _data){return input;} };
       let searchURL = afq;
       // Replace the context placeholders in the queries
       Object.keys(req.body.context || {}).forEach(contextKey => {
         searchURL = searchURL.split(`{{context.${contextKey}}}`).join(req.body.context[contextKey]);
       });
       console.log(searchURL);
-      const searchRequest = client.request(afq, { pageLimit: 0, flat: true })
+      const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
         .then(result => {
-          console.log('result: ', result);
-          addResponseToBundle(result, bundle);
+          let patientData = bundle.entry.map(b => b.resource);
+          let translated = translateResponse(result, patientData);
+          bundle.entry = translated.map(tr => ({resource: tr}));
         });
       searchRequests.push(searchRequest);
     });
@@ -276,16 +280,16 @@ async function call(req, res, next) {
       cards = collapseIntoOne(cards);
     }
 
-    // console.log('--------------------------------------------------');
-    // console.log('Cards returned from CDS:');
-    // console.log(cards);
+    console.log('--------------------------------------------------');
+    console.log('Cards returned from CDS:');
+    console.log(cards);
 
-    // console.log('--------------------------------------------------');
-    // console.log('Suggestions:');
-    // cards.forEach(card => {
-    //   console.log(JSON.stringify(card.suggestions, null, 2));
-    // });
-    // console.log();
+    console.log('--------------------------------------------------');
+    console.log('Suggestions:');
+    cards.forEach(card => {
+      console.log(JSON.stringify(card.suggestions, null, 2));
+    });
+    console.log();
     
   } else { // Evaluate CQL expressions (not tied to any PlanDefinition)
 
@@ -384,7 +388,7 @@ async function call(req, res, next) {
 }
 
 function getFHIRClient(req, res) {
-  console.log("req body:", req.body);
+  console.log('req body:', req.body);
   if (req.body.fhirServer) {
     const state = {
       serverUrl: req.body.fhirServer,
