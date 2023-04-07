@@ -220,14 +220,15 @@ async function call(req, res, next) {
     const client = getFHIRClient(req, res);
     let searchRequests = [];
     req.app.locals.altFhirQueries.forEach(afq => {
-
+      console.log('URL template: ', afq);
       const { translateResponse } = res.locals?.apply ? res.locals.apply : { translateResponse(input, _data){return input;} };
       let searchURL = afq;
       // Replace the context placeholders in the queries
       Object.keys(req.body.context || {}).forEach(contextKey => {
         searchURL = searchURL.split(`{{context.${contextKey}}}`).join(req.body.context[contextKey]);
       });
-      console.log(searchURL);
+      console.log('Request context: ', req.body.context);
+      console.log('searchURL ', searchURL);
       const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
         .then(result => {
           let patientData = bundle.entry.map(b => b.resource);
