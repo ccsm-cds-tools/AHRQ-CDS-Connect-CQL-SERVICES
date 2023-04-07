@@ -1,29 +1,50 @@
+import { marked } from 'marked';
+
 /**
  * 
  * @param {*} cards 
  * @returns 
  */
-export function collapseIntoOne(cards) {
+export function collapseIntoOne(cards, useHtml=false) {
+  const summary = 'Cervical Cancer Decision Support';
   let justOneCard = [{}];
+
+  // Try to consolidate the recommendations
   let decisionAids = cards.filter(c => c.summary.toLowerCase().includes('decision aids'));
   let errors = cards.filter(c => c.summary.toLowerCase().includes('errors'));
   if (errors.length > 0) {
-    let errorObject = JSON.parse(errors[0].detail);
+    let details = JSON.parse(errors[0].detail);
     justOneCard = [{
       ...errors[0],
-      summary: 'CDS Error',
-      detail: errorObject.join('\n') ?? 'The CDS has returned an error.'
+      summary,
+      detail: details.join('\n') ?? 'The CDS has encountered an error.'
     }];
   } else if (decisionAids.length > 0) {
-    let aidObject = JSON.parse(decisionAids[0].detail);
+    // Try to deserialize the decision aids
+    let details = JSON.parse(decisionAids[0].detail);
+    const {
+      recommendation,
+      recommendationGroup,
+      recommendationDetails,
+      recommendationDate,
+      errors,
+      disclaimer,
+      suggestedOrders,
+      riskTable
+    } = details;
+    // Generate the markdown details
+    let markdown = 
+      '# ' + recommendation + ' (' + recommendationGroup + ') ' + '\n\n' +
+      recommendationDetails.join('\n\n') + '\n\n';
+    // Add the markdown to the card
     justOneCard = [{
       ...decisionAids[0],
-      summary: aidObject.recommendation,
-      detail: aidObject.recommendationDetails.join('\n\n')
+      summary,
+      detail: markdown
     }];
   } else {
     justOneCard = [{
-      summary: 'No Recommendation',
+      summary,
       uuid: '1',
       indicator: 'info',
       source: {
@@ -33,25 +54,97 @@ export function collapseIntoOne(cards) {
       detail: 'No recommendation has been returned by the CDS.'
     }];
   }
+
+  // Try to add in the patient history
   let patientHistory = cards.filter(c => c.summary.includes('history'));
   if (patientHistory.length > 0) {
-    let histObject = JSON.parse(patientHistory[0].detail);
-    justOneCard = [{
-      ...justOneCard[0],
-      detail: justOneCard[0].detail + 
-        '\n\n' +
-        '### Patient History\n\n' +
-        '#### Conditions\n\n' +
-        '* ' + histObject.patientHistory.conditions.map(formatEntry).join('\n* ') + '\n\n' +
-        '#### Observations\n\n' +
-        '* ' + histObject.patientHistory.observations.map(formatEntry).join('\n* ') + '\n\n' +
-        '#### DiagnosticReports\n\n' +
-        '* ' + histObject.patientHistory.diagnosticReports.map(formatEntry).join('\n* ') + '\n\n' +
-        '#### Procedures\n\n' +
-        '* ' + histObject.patientHistory.procedures.map(formatEntry).join('\n* ') + '\n\n' +
-        '#### Immunizations\n\n' +
-        '* ' + histObject.patientHistory.immunizations.map(formatEntry).join('\n* ')
-    }];
+    let details = JSON.parse(patientHistory[0].detail);
+    const {
+      patientInfo: {
+        name,
+        id,
+        isPregnant,
+        dateOfBirth,
+        sexAtBirth,
+        age,
+        gender,
+        primaryLanguage,
+        race
+      },
+      patientHistory: {
+        conditions,
+        observations,
+        medications,
+        procedures,
+        diagnosticReports,
+        encounters,
+        immunizations
+      }
+    } = details;
+
+    let dob = dateOfBirth.value;
+    
+    let markdown = 
+      '# Patient: ' + name + ' (DOB: ' + dob.month + '/' + dob.day + '/' + dob.year + ')';
+
+    let conditionString = conditions.map(formatEntry).join('\n* ');
+    let observationString = observations.map(formatEntry).join('\n* ');
+    let medicationString = medications.map(formatEntry).join('\n* ');
+    let reportString = diagnosticReports.map(formatEntry).join('\n* ');
+    let procedureString = procedures.map(formatEntry).join('\n* ');
+    let immunizationString = immunizations.map(formatEntry).join('\n* ');
+
+    if (
+      conditions.length > 0 ||
+      observations.length > 0 ||
+      medications.length > 0 ||
+      procedures.length > 0 ||
+      diagnosticReports.length > 0 ||
+      encounters.length > 0 ||
+      immunizations.length > 0
+    ) { markdown = markdown + '\n\n' + '## History' + '\n\n'; }
+
+    if (conditionString.length > 0) {
+      markdown = markdown + '\n\n' +
+        '### Diagnoses' + '\n\n' +
+        '* ' + conditionString + '\n\n';
+    }
+    if (observationString.length > 0) {
+      markdown = markdown + '\n\n' +
+        '### Observations' + '\n\n' +
+        '* ' + observationString + '\n\n';
+    }
+    if (medicationString.length > 0) {
+      markdown = markdown + '\n\n' +
+        '### Medications' + '\n\n' +
+        '* ' + medicationString + '\n\n';
+    }
+    if (reportString.length > 0) {
+      markdown = markdown + '\n\n' +
+        '### Labs' + '\n\n' +
+        '* ' + reportString + '\n\n';
+    }
+    if (procedureString.length > 0) {
+      markdown = markdown + '\n\n' +
+        '### Procedures' + '\n\n' +
+        '* ' + procedureString + '\n\n';
+    }
+    if (immunizationString.length > 0) {
+      markdown = markdown + '\n\n' +
+        '### Immunizations' + '\n\n' +
+        '* ' + immunizationString + '\n\n';
+    }
+
+    let finalDetails = justOneCard[0].detail + markdown;
+    finalDetails = useHtml ? 
+      '<div style="background-color:white;">' + marked(finalDetails) + '</div>' : 
+      finalDetails;
+    justOneCard[0].detail = finalDetails;
+    if (useHtml) {
+      justOneCard[0].extension = {
+        'com.epic.cdshooks.card.detail.content-type': 'text/html'
+      };
+    }
   }
   return justOneCard;
 }

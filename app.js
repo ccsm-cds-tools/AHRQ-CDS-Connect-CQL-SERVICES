@@ -45,6 +45,9 @@ const IGNORE_VSAC_ERRORS = process.env.IGNORE_VSAC_ERRORS ?? 'false';
 // Flag to attempt a SMART connection if no prefetch is provided
 const SMART_IF_NO_PREFETCH = process.env.SMART_IF_NO_PREFETCH ?? 'false';
 
+// Flag to indicate HTML should be returned instead of markdown
+const USE_HTML = process.env.USE_HTML ?? 'false';
+
 const PARAMS = {
   PORT,
   LIMIT,
@@ -52,7 +55,8 @@ const PARAMS = {
   COLLAPSE_CARDS,
   ALT_FHIR_QUERIES,
   IGNORE_VSAC_ERRORS,
-  SMART_IF_NO_PREFETCH
+  SMART_IF_NO_PREFETCH,
+  USE_HTML
 };
 
 console.log(PARAMS);

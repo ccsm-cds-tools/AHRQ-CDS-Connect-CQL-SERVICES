@@ -283,7 +283,7 @@ async function call(req, res, next) {
     }
 
     if (res.app.locals.collapseCards) {
-      cards = collapseIntoOne(cards);
+      cards = collapseIntoOne(cards, req.app.locals.useHtml ?? false);
     }
 
     console.log('--------------------------------------------------');

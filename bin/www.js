@@ -55,6 +55,12 @@ if (PARAMS?.SMART_IF_NO_PREFETCH?.toLowerCase() === 'true') {
   app.locals.smartIfNoPrefetch = false;
 }
 
+if (PARAMS?.USE_HTML?.toLowerCase() === 'true') {
+  app.locals.useHtml = true;
+} else {
+  app.locals.useHtml = false;
+}
+
 /**
  * Load local data into the local code service cache, repo, and local hooks
  */

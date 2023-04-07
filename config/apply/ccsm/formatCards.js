@@ -40,6 +40,9 @@ function extractInformation(action, otherResources) {
   let resolver = simpleResolver([...otherResources], true);
   // Extract any sources
   let sources = action?.documentation ? getSources(action.documentation) : [{label:'no source listed'}];
+  // Check the payload for JSON that may need to be deserialized
+  const payload = resolver(action.resource.reference)[0]?.payload;//[0]?.contentString;
+  let contentString = payload.length > 0 ? payload[0].contentString : null ?? '';
   // Create the information card
   let card = {
     summary: action.title,
@@ -48,7 +51,7 @@ function extractInformation(action, otherResources) {
     source: sources[0],
     links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
     // CommunicationRequest payload makes up the main contents of the card
-    detail: resolver(action.resource.reference)[0]?.payload[0].contentString ?? null
+    detail: contentString
   }; 
   return card;
 }
