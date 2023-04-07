@@ -227,6 +227,11 @@ async function call(req, res, next) {
       Object.keys(req.body.context || {}).forEach(contextKey => {
         searchURL = searchURL.split(`{{context.${contextKey}}}`).join(req.body.context[contextKey]);
       });
+      // Fallback to using the Patient resource to fill in the patientId if one isn't provided as context
+      let patientId = null;
+      const patients = bundle.entry.filter(b => b.resource.resourceType === 'Patient');
+      if (patients.length > 0) { patientId = patients[0].resource.id; }
+      if (patientId) { searchURL = searchURL.split('{{context.patientId}}').join(patientId); }
       console.log('Request context: ', req.body.context);
       console.log('searchURL ', searchURL);
       const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
