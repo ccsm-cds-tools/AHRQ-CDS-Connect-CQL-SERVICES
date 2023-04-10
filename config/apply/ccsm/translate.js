@@ -1,7 +1,9 @@
+import { ScreeningAndManagementTestType } from 'ccsm-cds-with-tests/fhir/ValueSet/ScreeningAndManagementTestType.js';
 import { CervicalCytologyResult } from 'ccsm-cds-with-tests/fhir/ValueSet/CervicalCytologyResult.js';
 import { HpvTestResult } from 'ccsm-cds-with-tests/fhir/ValueSet/HpvTestResult.js';
 import { CervicalHistologyResult } from 'ccsm-cds-with-tests/fhir/ValueSet/CervicalHistologyResult.js';
 
+let standardTestTypeCodes = reformatValueSet(ScreeningAndManagementTestType);
 let standardCytologyCodes = reformatValueSet(CervicalCytologyResult);
 let standardHpvCodes = reformatValueSet(HpvTestResult);
 let standardHistologyCodes = reformatValueSet(CervicalHistologyResult);
@@ -230,7 +232,16 @@ export function translateResponse(customApiResponse, patientData) {
       );
     });
 
-    console.log('diagnostic report reference: ', diagnosticReportIndex);
+    let codings = [];
+    if (papResults.length > 0) {
+      codings.push(standardTestTypeCodes['Cervical Cytology (Pap)']);
+    }
+    if (hpvResults.length > 0) {
+      codings.push(standardTestTypeCodes['HPV']);
+    }
+    if (colposcopyResults.length > 0) {
+      codings.push(standardTestTypeCodes['Cervical Histology']);
+    }
 
     let conclusionCodes = [];
 
@@ -248,6 +259,12 @@ export function translateResponse(customApiResponse, patientData) {
       // Update the DiagnosticReport in patientData with the results from the custom API
       patientData[diagnosticReportIndex] = {
         ...patientData[diagnosticReportIndex],
+        code: {
+          coding: [
+            ...patientData[diagnosticReportIndex].code.coding,
+            ...codings
+          ]
+        },
         conclusionCode: conclusionCodes
       };
 
