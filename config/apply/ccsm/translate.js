@@ -230,6 +230,8 @@ export function translateResponse(customApiResponse, patientData) {
       );
     });
 
+    console.log('diagnostic report reference: ', diagnosticReportIndex);
+
     let conclusionCodes = [];
 
     // Map the custom pap results to our standard codes
@@ -242,15 +244,17 @@ export function translateResponse(customApiResponse, patientData) {
     conclusionCodes = mapResults(colposcopyResults, customHistologyCodes, standardHistologyCodes, conclusionCodes);
 
     if (diagnosticReportIndex !== -1) {
+      console.log('Found the diagnostic report reference');
       // Update the DiagnosticReport in patientData with the results from the custom API
       patientData[diagnosticReportIndex] = {
         ...patientData[diagnosticReportIndex],
         conclusionCode: conclusionCodes
       };
 
-      console.log('dr: ', patientData[diagnosticReportIndex].conclusionCode);
+      console.log('diagnostic report: ', patientData[diagnosticReportIndex]);
+      console.log('dr conclusion codes: ', patientData[diagnosticReportIndex].conclusionCode);
       patientData[diagnosticReportIndex].conclusionCode.forEach(drcc => {
-        console.log('drcc: ', drcc.coding[0], drcc.text);
+        console.log('dr mapped conconclusion code: ', drcc.coding[0], drcc.text);
       });
     }
   });
