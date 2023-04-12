@@ -15,16 +15,17 @@
     "test:watch": "NODE_ENV=test npm test -- --watch",
     "test:debug": "NODE_ENV=test ./node_modules/.bin/mocha --inspect --debug-brk --reporter spec --recursive",
     "lint": "./node_modules/.bin/eslint .",
-    "lint:fix": "./node_modules/.bin/eslint . --fix"
+    "lint:fix": "./node_modules/.bin/eslint . --fix",
+    "download-value-sets": "node config/apply/ccsm/valuesets/updateValueSetDb.mjs $UMLS_API_KEY"
   },
   "dependencies": {
     "body-parser": "^1.19.2",
-    "ccsm-cds-with-tests": "^0.3.3",
+    "ccsm-cds-with-tests": "^0.3.4",
     "commander": "^2.20.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "cql-exec-fhir": "^2.0.2",
-    "cql-exec-vsac": "^1.2.2",
+    "cql-exec-fhir": "^2.1.4",
+    "cql-exec-vsac": "^2.0.1",
     "cql-execution": "^2.3.3",
     "debug": "~2.6.0",
     "encender": "^0.6.1",
