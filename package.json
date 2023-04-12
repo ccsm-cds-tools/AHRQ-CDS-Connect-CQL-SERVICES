@@ -28,7 +28,7 @@
     "cql-exec-vsac": "^2.0.1",
     "cql-execution": "^2.3.3",
     "debug": "~2.6.0",
-    "encender": "^0.6.1",
+    "encender": "^0.7.0",
     "express": "^4.17.3",
     "fhirclient": "^2.4.0",
     "helmet": "^4.6.0",

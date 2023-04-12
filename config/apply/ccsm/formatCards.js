@@ -66,12 +66,14 @@ function extractSuggestions(action, otherResources) {
   // Create a resolver so we can find any referenced resources
   let resolver = simpleResolver([...otherResources], true);
   // Extract any sources
-  let sources = action?.documentation ? getSources(action.documentation) : [{label:'no source listed'}];
+  let sources = [];
+  if (action?.documentation) { sources.push(getSources(action.documentation)); }
   // Initialize an emptry suggestion array
   let suggestions = [];
   // Convert actions to suggestions
   for (const subaction of action.action) {
     if (subaction.resource?.reference?.includes('ServiceRequest')) {
+      if (subaction?.documentation) { sources.push(getSources(subaction.documentation)); }
       // Resolve the referenced ServiceRequest
       let srvRqt = resolver(subaction.resource.reference)[0] ?? {};
       // Add necessary fields to Service Request resource
@@ -125,14 +127,15 @@ function extractSuggestions(action, otherResources) {
     }
   }
   // Format the card using the action and suggestions array
+  let source = sources.length > 0 ? sources[0] : {label: 'No source listed'};
   let card = {
     summary: action.title,
     detail: action.description,
     uuid: action.id, // Cards must have a uuid to render properly
     indicator: getIndicator(action.priority),
-    source: sources[0],
+    source: source.length > 0 ? source[0] : source,
     selectionBehavior: getSelectionBehavior(action.selectionBehavior),
-    links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
+    links: sources.map(s => ({...s[0],type:'absolute'}))[0],
     suggestions: suggestions
   };   
   return card;
@@ -164,7 +167,7 @@ function getSources(relatedArtifacts) {
     // Only consider these types of relatedArtifacts
     if (['documentation','justification','citation','derived-from'].includes(related.type)) {
       sources.push({
-        label: related.label,
+        label: related.display,
         url: related.url
       });
     }
