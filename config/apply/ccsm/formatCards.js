@@ -51,7 +51,10 @@ function extractInformation(action, otherResources) {
     source: sources[0],
     links: sources.slice(1)?.map(s => ({...s,type:'absolute'})),
     // CommunicationRequest payload makes up the main contents of the card
-    detail: contentString
+    detail: contentString,
+    extension: {
+      documentation: action.documentation
+    }
   }; 
   return card;
 }
@@ -67,13 +70,20 @@ function extractSuggestions(action, otherResources) {
   let resolver = simpleResolver([...otherResources], true);
   // Extract any sources
   let sources = [];
-  if (action?.documentation) { sources.push(getSources(action.documentation)); }
+  let documentation = [];
+  if (action?.documentation) {
+    documentation.push(action.documentation);
+    sources.push(getSources(action.documentation)); 
+  }
   // Initialize an emptry suggestion array
   let suggestions = [];
   // Convert actions to suggestions
   for (const subaction of action.action) {
     if (subaction.resource?.reference?.includes('ServiceRequest')) {
-      if (subaction?.documentation) { sources.push(getSources(subaction.documentation)); }
+      if (subaction?.documentation) {
+        documentation.push(subaction.documentation);
+        sources.push(getSources(subaction.documentation)); 
+      }
       // Resolve the referenced ServiceRequest
       let srvRqt = resolver(subaction.resource.reference)[0] ?? {};
       // Add necessary fields to Service Request resource
@@ -127,16 +137,19 @@ function extractSuggestions(action, otherResources) {
     }
   }
   // Format the card using the action and suggestions array
-  let source = sources.length > 0 ? sources[0] : {label: 'No source listed'};
+  sources = sources.length > 0 ? sources : [{label: 'No source listed'}];
   let card = {
     summary: action.title,
     detail: action.description,
     uuid: action.id, // Cards must have a uuid to render properly
     indicator: getIndicator(action.priority),
-    source: source.length > 0 ? source[0] : source,
+    source: sources[0],
     selectionBehavior: getSelectionBehavior(action.selectionBehavior),
-    links: sources.map(s => ({...s[0],type:'absolute'}))[0],
-    suggestions: suggestions
+    links: sources.map(s => ({...s,type:'absolute'})),
+    suggestions: suggestions,
+    extension: {
+      documentation: documentation
+    }
   };   
   return card;
 }
@@ -161,7 +174,7 @@ function getIndicator(priority) {
  * @param {Object[]} relatedArtifacts Array of relatedArtifact elements
  * @returns {Object[]} Array of sources
  */
-function getSources(relatedArtifacts) {
+export function getSources(relatedArtifacts) {
   let sources = [];
   for (const related of relatedArtifacts) {
     // Only consider these types of relatedArtifacts

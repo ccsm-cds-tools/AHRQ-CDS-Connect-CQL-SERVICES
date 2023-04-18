@@ -1,4 +1,5 @@
 import { marked } from 'marked';
+import { getSources } from './formatCards.js';
 
 /**
  * 
@@ -32,6 +33,8 @@ export function collapseIntoOne(cards, useHtml=false) {
       suggestedOrders,
       riskTable
     } = details;
+    let sources = getSources(decisionAids[0]?.extension?.documentation.filter(d => d.label === recommendationGroup));
+    console.log(sources);
     // Generate the markdown details
     let markdown = 
       '# ' + recommendation + ' (' + recommendationGroup + ') ' + '\n\n' +
@@ -40,7 +43,9 @@ export function collapseIntoOne(cards, useHtml=false) {
     justOneCard = [{
       ...decisionAids[0],
       summary,
-      detail: markdown
+      detail: markdown,
+      source: sources[0],
+      links: sources.map(s => ({...s,type:'absolute'}))
     }];
   } else {
     justOneCard = [{
@@ -135,7 +140,7 @@ export function collapseIntoOne(cards, useHtml=false) {
         '* ' + immunizationString + '\n\n';
     }
 
-    let finalDetails = justOneCard[0].detail + markdown;
+    let finalDetails = justOneCard[0].detail + '\n\n' + markdown;
     finalDetails = useHtml ? 
       '<div style="background-color:white;">' + marked(finalDetails) + '</div>' : 
       finalDetails;

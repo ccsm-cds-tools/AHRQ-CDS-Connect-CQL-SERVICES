@@ -42,11 +42,14 @@ function reformatValueSet(ValueSet) {
 // - ECT.14009.4 - LSIL
 // - ECT.14009.5 - HSIL
 // - ECT.14009.6 - Squamous Cell Carcinoma
-// - ECT.14009.7 - AGC
 // - ECT.14009.8 - AGC-FN
 // - ECT.14009.9 - AIS
 // - ECT.14009.10 - Adenocarcinoma
 // - ECT.14009.99 - Other
+// - ECT.14009.10000 - LSIL cannot r/o HSIL
+// - ECT.14009.10001 - AGC-Endocervical
+// - ECT.14009.10002 - AGC-Endometrial
+// - ECT.14009.10003 - AGC-NOS
 const customCytologyCodes = {
   'ECT.14009.1': {
     Value: 'NILM',
@@ -72,13 +75,9 @@ const customCytologyCodes = {
     Value: 'Squamous Cell Carcinoma',
     mapping: 'SCC'
   },
-  'ECT.14009.7': {
-    Value: 'AGC',
-    mapping: 'AGC'
-  },
   'ECT.14009.8': {
     Value: 'AGC-FN',
-    mapping: null
+    mapping: 'AGC' // NOTE: What should this map to?
   },
   'ECT.14009.9': {
     Value: 'AIS',
@@ -86,11 +85,27 @@ const customCytologyCodes = {
   },
   'ECT.14009.10': {
     Value: 'Adenocarcinoma',
-    mapping: null
+    mapping: null // NOTE: What should this map to?
   },
   'ECT.14009.99': {
     Value: 'Other',
-    mapping: null
+    mapping: null // NOTE: What should this map to?
+  },
+  'ECT.14009.10000': {
+    Value: 'LSIL cannot r/o HSIL',
+    mapping: null // NOTE: What should this map to?
+  },
+  'ECT.14009.10001': {
+    Value: 'AGC-Endocervical',
+    mapping: 'AGC' // NOTE: What should this map to?
+  },
+  'ECT.14009.10002': {
+    Value: 'AGC-Endometrial',
+    mapping: 'AGC' // NOTE: What should this map to?
+  },
+  'ECT.14009.10003': {
+    Value: 'AGC-NOS',
+    mapping: 'AGC' // NOTE: What should this map to?
   }
 };
 
@@ -181,27 +196,27 @@ const customHistologyCodes = {
   },
   'ECT.14005.7': {
     Value: 'ECC Not Done',
-    mapping: null
+    mapping: null // NOTE: What should this map to?
   },
   'ECT.14005.8': {
     Value: 'ECC Negative',
-    mapping: null
+    mapping: null // NOTE: What should this map to?
   },
   'ECT.14005.9': {
     Value: 'ECC Positive',
-    mapping: null
+    mapping: null // NOTE: What should this map to?
   },
   'ECT.14005.10': {
     Value: 'Squamous Cell Carcinoma',
-    mapping: 'Cancer'
+    mapping: 'Cancer' // NOTE: What should this map to?
   },
   'ECT.14005.11': {
     Value: 'Adenocarcinoma',
-    mapping: 'Cancer'
+    mapping: 'Cancer' // NOTE: What should this map to?
   },
   'ECT.14005.99': {
     Value: 'Other',
-    mapping: null
+    mapping: null // NOTE: What should this map to?
   }
 };
 
