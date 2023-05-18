@@ -155,7 +155,8 @@ export function collapseIntoOne(cards, useHtml=false) {
 }
 
 function formatEntry(ent) {
-  let entString = ent.name + ' (' + ent.date + '): ';
+  let entDate = ent.date ?? 'no date available';
+  let entString = ent.name + ' (' + entDate + '): ';
   entString = ent.value ? entString + ent.value : entString + 'No result available';
   return entString;
 }
