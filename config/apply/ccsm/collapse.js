@@ -18,7 +18,7 @@ export function collapseIntoOne(cards, useHtml=false) {
     justOneCard = [{
       ...errors[0],
       summary,
-      detail: details.join('\n') ?? 'The CDS has encountered an error.'
+      detail: details.join('\n') ?? 'The CDS has encountered an error.' + '\n\n'
     }];
   } else if (decisionAids.length > 0) {
     // Try to deserialize the decision aids
@@ -56,7 +56,7 @@ export function collapseIntoOne(cards, useHtml=false) {
         label: 'no source listed'
       },
       links: [],
-      detail: 'No recommendation has been returned by the CDS.'
+      detail: 'No recommendation has been returned by the CDS.'  + '\n\n'
     }];
   }
 
