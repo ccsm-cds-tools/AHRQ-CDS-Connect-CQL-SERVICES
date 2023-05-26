@@ -77,7 +77,7 @@ const customCytologyCodes = {
   },
   'ECT.14009.8': {
     Value: 'AGC-FN',
-    mapping: 'AGC' // NOTE: What should this map to?
+    mapping: 'AGC favors neoplasia'
   },
   'ECT.14009.9': {
     Value: 'AIS',
@@ -85,28 +85,32 @@ const customCytologyCodes = {
   },
   'ECT.14009.10': {
     Value: 'Adenocarcinoma',
-    mapping: null // NOTE: What should this map to?
+    mapping: 'SCC'
   },
   'ECT.14009.99': {
     Value: 'Other',
-    mapping: null // NOTE: What should this map to?
+    mapping: null // No mapping, as 'Other' can be used for a multitude of responses
   },
   'ECT.14009.10000': {
     Value: 'LSIL cannot r/o HSIL',
-    mapping: null // NOTE: What should this map to?
+    mapping: 'HSIL'
   },
   'ECT.14009.10001': {
     Value: 'AGC-Endocervical',
-    mapping: 'AGC' // NOTE: What should this map to?
+    mapping: 'AGC favors neoplasia'
   },
   'ECT.14009.10002': {
     Value: 'AGC-Endometrial',
-    mapping: 'AGC' // NOTE: What should this map to?
+    mapping: 'AGC favors neoplasia'
   },
   'ECT.14009.10003': {
     Value: 'AGC-NOS',
-    mapping: 'AGC' // NOTE: What should this map to?
-  }
+    mapping: 'AGC'
+  } //,
+  // 'ECT.????.????': { // NOTE: What is local code for EC/TZ?
+  //   Value: 'EC/TZ',
+  //   mapping: 'Absent Transformation Zone'
+  // }
 };
 
 // ## HPVResults
@@ -169,6 +173,8 @@ const customHpvCodes = {
 // - ECT.14005.10 - Squamous Cell Carcinoma
 // - ECT.14005.11 - Adenocarcinoma
 // - ECT.14005.99 - Other
+// - ECT.14005.10000 - SCJ Not Visible 
+// - ECT.14005.10001 - SCJ Partially Visible, Fully Visible 
 const customHistologyCodes = {
   'ECT.14005.1': {
     Value: 'Normal',
@@ -196,11 +202,11 @@ const customHistologyCodes = {
   },
   'ECT.14005.7': {
     Value: 'ECC Not Done',
-    mapping: null // NOTE: What should this map to?
+    mapping: null
   },
   'ECT.14005.8': {
     Value: 'ECC Negative',
-    mapping: null // NOTE: What should this map to?
+    mapping: null
   },
   'ECT.14005.9': {
     Value: 'ECC Positive',
@@ -208,15 +214,23 @@ const customHistologyCodes = {
   },
   'ECT.14005.10': {
     Value: 'Squamous Cell Carcinoma',
-    mapping: 'Cancer' // NOTE: What should this map to?
+    mapping: 'Cancer'
   },
   'ECT.14005.11': {
     Value: 'Adenocarcinoma',
-    mapping: 'Cancer' // NOTE: What should this map to?
+    mapping: 'Cancer'
   },
   'ECT.14005.99': {
     Value: 'Other',
-    mapping: null // NOTE: What should this map to?
+    mapping: null // No mapping, as 'Other' can be used for a multitude of responses
+  },
+  'ECT.14005.10000': {
+    Value: 'SCJ Not Visible',
+    mapping: null
+  },
+  'ECT.14005.10001': {
+    Value: 'SCJ Partially Visible, Fully Visible',
+    mapping: null
   }
 };
 
