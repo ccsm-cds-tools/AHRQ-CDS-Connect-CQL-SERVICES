@@ -234,6 +234,54 @@ const customHistologyCodes = {
   }
 };
 
+// ## EndocervicalCuretageResults
+// >Can be null.
+
+// Maps to category values in ECT, 14015 - CCS - TRANSCRIBED ENDOCERVICAL CURETTAGE RESULTS
+
+// ECT.14015.1 - Negative
+// ECT.14015.2 - LSIL
+// ECT.14015.3 - HSIL
+// ECT.14015.4 - AIS
+// ECT.14015.5 - Squamous cell carcinoma
+// ECT.14015.6 - Adenocarcinoma-Endocervical
+// ECT.14015.7 - Insufficient
+// ECT.14015.99 - Other
+const customEccCodes = {
+  'ECT.14015.1': {
+    Value: 'Negative',
+    mapping: null
+  },
+  'ECT.14015.2': {
+    Value: 'LSIL',
+    mapping: 'CIN 1'
+  },
+  'ECT.14015.3': {
+    Value: 'HSIL',
+    mapping: 'CIN 3'
+  },
+  'ECT.14015.4': {
+    Value: 'AIS',
+    mapping: 'AIS'
+  },
+  'ECT.14015.5': {
+    Value: 'Squamous cell carcinoma',
+    mapping: 'Cancer'
+  },
+  'ECT.14015.6': {
+    Value: 'Adenocarcinoma-Endocervical',
+    mapping: 'Cancer'
+  },
+  'ECT.14015.7': {
+    Value: 'Insufficient',
+    mapping: null
+  },
+  'ECT.14015.99': {
+    Value: 'Other',
+    mapping: null
+  }
+};
+
 /**
  * Translate the response from the custom API into FHIR and updated the array of patient data
  * @param {Object[]} customApiResponse - Not in FHIR
@@ -250,7 +298,8 @@ export function translateResponse(customApiResponse, patientData) {
       FindingType: findingType,
       PapResults: papResults,
       HPVResults: hpvResults,
-      ColposcopyResults: colposcopyResults
+      ColposcopyResults: colposcopyResults,
+      EndocervicalCuretageResults: endocervicalCuretageResults
     } = order;
 
     // Find the DiagnosticReport referenced by this order
@@ -271,6 +320,9 @@ export function translateResponse(customApiResponse, patientData) {
     if (colposcopyResults.length > 0) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
+    if (endocervicalCuretageResults.length > 0) {
+      codings.push(standardTestTypeCodes['Cervical Histology']);
+    }
 
     let conclusionCodes = [];
 
@@ -282,6 +334,9 @@ export function translateResponse(customApiResponse, patientData) {
 
     // Map the custom histology results to our standard codes
     conclusionCodes = mapResults(colposcopyResults, customHistologyCodes, standardHistologyCodes, conclusionCodes);
+
+    // Map the custom ECC results to our standard codes
+    conclusionCodes = mapResults(endocervicalCuretageResults, customEccCodes, standardHistologyCodes, conclusionCodes);
 
     if (diagnosticReportIndex !== -1) {
       console.log('Found the diagnostic report reference');
