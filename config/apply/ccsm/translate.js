@@ -319,8 +319,7 @@ export function translateResponse(customApiResponse, patientData) {
     }
     if (colposcopyResults.length > 0) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
-    }
-    if (endocervicalCuretageResults.length > 0) {
+    } else if (endocervicalCuretageResults.length > 0) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
 
