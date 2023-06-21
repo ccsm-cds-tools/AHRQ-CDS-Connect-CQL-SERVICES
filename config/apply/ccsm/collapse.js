@@ -18,7 +18,7 @@ export function collapseIntoOne(cards, useHtml=false) {
     justOneCard = [{
       ...errors[0],
       summary,
-      detail: details.join('\n') ?? 'The CDS has encountered an error.\n\n'
+      detail: details.join('\n') ?? 'The CDS has encountered an error processing the patient information. Please review patient history and use clinical judgement.\n\n'
     }];
   } else if (decisionAids.length > 0) {
     // Try to deserialize the decision aids
@@ -56,7 +56,7 @@ export function collapseIntoOne(cards, useHtml=false) {
         label: 'no source listed'
       },
       links: [],
-      detail: 'No recommendation has been returned by the CDS.\n\n'
+      detail: 'The guidelines do not provide any recommendation for this case. Please use clinical judgement.\n\n'
     }];
   }
 
