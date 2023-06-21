@@ -12,7 +12,7 @@ let standardProcedureCodes = reformatValueSet(PertinentProcedureShortList);
 
 /**
  * Take a FHIR ValueSet resource and reformat to return just the codings.
- * @param {Object} ValueSet - A FHIR ValueSet resource 
+ * @param {Object} ValueSet - A FHIR ValueSet resource
  * @returns {Object} - An object containing just the codings that appear in the value set
  */
 function reformatValueSet(ValueSet) {
@@ -26,7 +26,7 @@ function reformatValueSet(ValueSet) {
         display: cv.designation[0].value
       }
     };
-  },{});
+  }, {});
   return reformatted;
 }
 
@@ -175,8 +175,8 @@ const customHpvCodes = {
 // - ECT.14005.10 - Squamous Cell Carcinoma
 // - ECT.14005.11 - Adenocarcinoma
 // - ECT.14005.99 - Other
-// - ECT.14005.10000 - SCJ Not Visible 
-// - ECT.14005.10001 - SCJ Partially Visible, Fully Visible 
+// - ECT.14005.10000 - SCJ Not Visible
+// - ECT.14005.10001 - SCJ Partially Visible, Fully Visible
 const customHistologyCodes = {
   'ECT.14005.1': {
     Value: 'Normal',
@@ -284,6 +284,26 @@ const customEccCodes = {
   }
 };
 
+// Extract Procedures from FindingType
+// ## FindingType
+// >Can be null.
+
+// Maps to Category values in ECT, 14001 - CCS - TRANSCRIBED FINDING TYPES
+
+// ECT.14001.1 - Pap Smear
+// ECT.14001.2 - HPV
+// ECT.14001.3 - Transformation Zone
+// ECT.14001.4 - Colposcopy
+// ECT.14001.5 - Excision
+// ECT.14001.6 - Ablation
+// ECT.14001.7 - Endometrial Biopsy
+// ECT.14001.8 - Endocervical Curettage
+const procedureMappings = new Map([
+  ['ECT.14001.4', 'Colposcopy'],
+  ['ECT.14001.5', 'Cervix Excision'],
+  ['ECT.14001.6', 'Cervical Histology']
+]);
+
 /**
  * Translate the response from the custom API into FHIR and updated the array of patient data
  * @param {Object[]} customApiResponse - Not in FHIR
@@ -307,7 +327,7 @@ export function translateResponse(customApiResponse, patientData) {
     // Find the DiagnosticReport referenced by this order
     const diagnosticReportIndex = patientData.findIndex(pd => {
       return (
-        pd.resourceType === 'DiagnosticReport' && 
+        pd.resourceType === 'DiagnosticReport' &&
         pd.identifier.filter(id => id.value === orderId).length > 0
       );
     });
@@ -325,32 +345,12 @@ export function translateResponse(customApiResponse, patientData) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
 
-    // Extract Procedures from FindingType
-    // ## FindingType
-    // >Can be null.
-
-    // Maps to Category values in ECT, 14001 - CCS - TRANSCRIBED FINDING TYPES
-
-    // ECT.14001.1 - Pap Smear
-    // ECT.14001.2 - HPV
-    // ECT.14001.3 - Transformation Zone
-    // ECT.14001.4 - Colposcopy
-    // ECT.14001.5 - Excision
-    // ECT.14001.6 - Ablation
-    // ECT.14001.7 - Endometrial Biopsy
-    // ECT.14001.8 - Endocervical Curettage
-    let procedureCodes = [];   
+    let procedureCode;
     if (findingType.length > 0) {
-      switch (findingType.ID) {
-      case 'ECT.14001.4':
-        procedureCodes.push(standardProcedureCodes['Colposcopy']);
-        break;
-      case 'CT.14001.5':
-        procedureCodes.push(standardProcedureCodes['Cervix Excision']);
-        break;
-      case 'ECT.14001.6':
-        procedureCodes.push(standardProcedureCodes['Cervix Ablation']);
-        break;
+      mappedProcedureText = procedureMappings[findingType.ID];
+
+      if (mappedProcedureText) {
+        procedureCode = standardProcedureCodes[mappedProcedureText]
       }
     }
 
@@ -388,18 +388,24 @@ export function translateResponse(customApiResponse, patientData) {
         console.log('dr mapped conconclusion code: ', drcc.coding[0], drcc.text);
       });
 
-      if (procedureCodes.length > 0) {
-        const procedureCode = procedureCodes[0];
+      if (procedureCode) {
         const originalDiagnosticReport = patientData[diagnosticReportIndex];
-        let procedureResource = 
-          {
-            'resourceType': 'Procedure',
-            'id': originalDiagnosticReport.id + '-procedure',
-            'subject': originalDiagnosticReport.subject,
-            'status': 'completed',
-            'code': procedureCode,
-            'performedDateTime': originalDiagnosticReport.effectiveDateTime
-          };
+        let procedureResource =
+        {
+          'resourceType': 'Procedure',
+          'id': originalDiagnosticReport.id,
+          'subject': originalDiagnosticReport.subject,
+          'status': 'completed',
+          'code': procedureCode,
+          'performedDateTime': originalDiagnosticReport.effectiveDateTime
+        };
+
+        if (procedureResource.id.length > 54) {
+          procedureResource.id = procedureResource.id.substring(0, 54) + '-procedure';
+        } else {
+          procedureResource.id += '-procedure';
+        }
+
         patientData.push(procedureResource);
         console.log('procedure: ', procedureResource);
         console.log('procedure code: ', procedureCode);
