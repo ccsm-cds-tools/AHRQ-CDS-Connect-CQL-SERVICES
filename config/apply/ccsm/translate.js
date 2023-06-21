@@ -2,11 +2,13 @@ import { ScreeningAndManagementTestType } from 'ccsm-cds-with-tests/fhir/ValueSe
 import { CervicalCytologyResult } from 'ccsm-cds-with-tests/fhir/ValueSet/CervicalCytologyResult.js';
 import { HpvTestResult } from 'ccsm-cds-with-tests/fhir/ValueSet/HpvTestResult.js';
 import { CervicalHistologyResult } from 'ccsm-cds-with-tests/fhir/ValueSet/CervicalHistologyResult.js';
+import { PertinentProcedureShortList } from 'ccsm-cds-with-tests/fhir/ValueSet/PertinentProcedureShortList.js';
 
 let standardTestTypeCodes = reformatValueSet(ScreeningAndManagementTestType);
 let standardCytologyCodes = reformatValueSet(CervicalCytologyResult);
 let standardHpvCodes = reformatValueSet(HpvTestResult);
 let standardHistologyCodes = reformatValueSet(CervicalHistologyResult);
+let standardProcedureCodes = reformatValueSet(PertinentProcedureShortList);
 
 /**
  * Take a FHIR ValueSet resource and reformat to return just the codings.
@@ -323,6 +325,35 @@ export function translateResponse(customApiResponse, patientData) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
 
+    // Extract Procedures from FindingType
+    // ## FindingType
+    // >Can be null.
+
+    // Maps to Category values in ECT, 14001 - CCS - TRANSCRIBED FINDING TYPES
+
+    // ECT.14001.1 - Pap Smear
+    // ECT.14001.2 - HPV
+    // ECT.14001.3 - Transformation Zone
+    // ECT.14001.4 - Colposcopy
+    // ECT.14001.5 - Excision
+    // ECT.14001.6 - Ablation
+    // ECT.14001.7 - Endometrial Biopsy
+    // ECT.14001.8 - Endocervical Curettage
+    let procedureCodes = [];   
+    if (findingType.length > 0) {
+      switch (findingType.ID) {
+      case 'ECT.14001.4':
+        procedureCodes.push(standardProcedureCodes['Colposcopy']);
+        break;
+      case 'CT.14001.5':
+        procedureCodes.push(standardProcedureCodes['Cervix Excision']);
+        break;
+      case 'ECT.14001.6':
+        procedureCodes.push(standardProcedureCodes['Cervix Ablation']);
+        break;
+      }
+    }
+
     let conclusionCodes = [];
 
     // Map the custom pap results to our standard codes
@@ -356,6 +387,23 @@ export function translateResponse(customApiResponse, patientData) {
       patientData[diagnosticReportIndex].conclusionCode.forEach(drcc => {
         console.log('dr mapped conconclusion code: ', drcc.coding[0], drcc.text);
       });
+
+      if (procedureCodes.length > 0) {
+        const procedureCode = procedureCodes[0];
+        const originalDiagnosticReport = patientData[diagnosticReportIndex];
+        let procedureResource = 
+          {
+            'resourceType': 'Procedure',
+            'id': originalDiagnosticReport.id + '-procedure',
+            'subject': originalDiagnosticReport.subject,
+            'status': 'completed',
+            'code': procedureCode,
+            'performedDateTime': originalDiagnosticReport.effectiveDateTime
+          };
+        patientData.push(procedureResource);
+        console.log('procedure: ', procedureResource);
+        console.log('procedure code: ', procedureCode);
+      }
     }
   });
 
