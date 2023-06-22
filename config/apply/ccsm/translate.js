@@ -345,7 +345,7 @@ export function translateResponse(customApiResponse, patientData) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
 
-    // Is findingType alway provided?
+    // Is findingType always provided?
     let procedureCode = standardProcedureCodes[procedureMappings[findingType?.ID]];
 
     let conclusionCodes = [];
