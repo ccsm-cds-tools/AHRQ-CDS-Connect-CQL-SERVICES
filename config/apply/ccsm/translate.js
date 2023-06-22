@@ -298,11 +298,11 @@ const customEccCodes = {
 // ECT.14001.6 - Ablation
 // ECT.14001.7 - Endometrial Biopsy
 // ECT.14001.8 - Endocervical Curettage
-const procedureMappings = new Map([
-  ['ECT.14001.4', 'Colposcopy'],
-  ['ECT.14001.5', 'Cervix Excision'],
-  ['ECT.14001.6', 'Cervical Histology']
-]);
+const procedureMappings = {
+  'ECT.14001.4': 'Colposcopy',
+  'ECT.14001.5': 'Cervix Excision',
+  'ECT.14001.6': 'Cervical Histology'
+};
 
 /**
  * Translate the response from the custom API into FHIR and updated the array of patient data
@@ -345,14 +345,8 @@ export function translateResponse(customApiResponse, patientData) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
 
-    let procedureCode;
-    if (findingType.length > 0) {
-      mappedProcedureText = procedureMappings[findingType.ID];
-
-      if (mappedProcedureText) {
-        procedureCode = standardProcedureCodes[mappedProcedureText]
-      }
-    }
+    // Is findingType alway provided?
+    let procedureCode = standardProcedureCodes[procedureMappings[findingType?.ID]];
 
     let conclusionCodes = [];
 
@@ -390,7 +384,7 @@ export function translateResponse(customApiResponse, patientData) {
 
       if (procedureCode) {
         const originalDiagnosticReport = patientData[diagnosticReportIndex];
-        let procedureResource =
+        let newProcedure =
         {
           'resourceType': 'Procedure',
           'id': originalDiagnosticReport.id,
@@ -400,14 +394,15 @@ export function translateResponse(customApiResponse, patientData) {
           'performedDateTime': originalDiagnosticReport.effectiveDateTime
         };
 
-        if (procedureResource.id.length > 54) {
-          procedureResource.id = procedureResource.id.substring(0, 54) + '-procedure';
+        if (newProcedure.id.length > 54) {
+          newProcedure.id = newProcedure.id.substring(0, 54) + '-procedure';
         } else {
-          procedureResource.id += '-procedure';
+          newProcedure.id += '-procedure';
         }
 
-        patientData.push(procedureResource);
-        console.log('procedure: ', procedureResource);
+        patientData.push(newProcedure);
+
+        console.log('procedure: ', newProcedure);
         console.log('procedure code: ', procedureCode);
       }
     }
