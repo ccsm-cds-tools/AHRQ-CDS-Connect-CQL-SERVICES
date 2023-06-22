@@ -50,6 +50,15 @@ function reformatValueSet(ValueSet) {
 // - ECT.14009.10001 - AGC-Endocervical
 // - ECT.14009.10002 - AGC-Endometrial
 // - ECT.14009.10003 - AGC-NOS
+
+// ## TransformationZone
+// > Can be null.
+
+// Maps to Category values in ECT, 14004 - CCS - TRANSCRIBED TRANSFORMATION ZONE
+
+// ECT.14004.1 - Present
+// ECT.14004.2 - Absent
+// ECT.14004.3 - N/A
 const customCytologyCodes = {
   'ECT.14009.1': {
     Value: 'NILM',
@@ -107,7 +116,7 @@ const customCytologyCodes = {
     Value: 'AGC-NOS',
     mapping: 'AGC'
   },
-  'ECT.14004.2': {
+  'ECT.14004.2': { // From the TransformationZone key
     Value: 'Absent',
     mapping: 'Absent Transformation Zone'
   }
