@@ -382,6 +382,7 @@ export function translateResponse(customApiResponse, patientData) {
         console.log('dr mapped conconclusion code: ', drcc.coding[0], drcc.text);
       });
 
+      // Create a Procedure resource based on DiagnosticReport
       if (procedureCode) {
         const originalDiagnosticReport = patientData[diagnosticReportIndex];
         let newProcedure =
