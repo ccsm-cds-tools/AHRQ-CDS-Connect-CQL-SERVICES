@@ -50,6 +50,15 @@ function reformatValueSet(ValueSet) {
 // - ECT.14009.10001 - AGC-Endocervical
 // - ECT.14009.10002 - AGC-Endometrial
 // - ECT.14009.10003 - AGC-NOS
+
+// ## TransformationZone
+// > Can be null.
+
+// Maps to Category values in ECT, 14004 - CCS - TRANSCRIBED TRANSFORMATION ZONE
+
+// ECT.14004.1 - Present
+// ECT.14004.2 - Absent
+// ECT.14004.3 - N/A
 const customCytologyCodes = {
   'ECT.14009.1': {
     Value: 'NILM',
@@ -106,11 +115,11 @@ const customCytologyCodes = {
   'ECT.14009.10003': {
     Value: 'AGC-NOS',
     mapping: 'AGC'
-  } //,
-  // 'ECT.????.????': { // NOTE: What is local code for EC/TZ?
-  //   Value: 'EC/TZ',
-  //   mapping: 'Absent Transformation Zone'
-  // }
+  },
+  'ECT.14004.2': { // From the TransformationZone key
+    Value: 'Absent',
+    mapping: 'Absent Transformation Zone'
+  }
 };
 
 // ## HPVResults
@@ -296,6 +305,7 @@ export function translateResponse(customApiResponse, patientData) {
     const {
       OrderId: orderId,
       FindingType: findingType,
+      TransformationZone: transformationZone,
       PapResults: papResults,
       HPVResults: hpvResults,
       ColposcopyResults: colposcopyResults,
@@ -311,15 +321,13 @@ export function translateResponse(customApiResponse, patientData) {
     });
 
     let codings = [];
-    if (papResults.length > 0) {
+    if ((papResults.length > 0) || (transformationZone) ){
       codings.push(standardTestTypeCodes['Cervical Cytology (Pap)']);
     }
     if (hpvResults.length > 0) {
       codings.push(standardTestTypeCodes['HPV']);
     }
-    if (colposcopyResults.length > 0) {
-      codings.push(standardTestTypeCodes['Cervical Histology']);
-    } else if (endocervicalCuretageResults.length > 0) {
+    if ((colposcopyResults.length > 0) || (endocervicalCuretageResults.length > 0)) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
 
@@ -328,6 +336,11 @@ export function translateResponse(customApiResponse, patientData) {
     // Map the custom pap results to our standard codes
     conclusionCodes = mapResults(papResults, customCytologyCodes, standardCytologyCodes, conclusionCodes);
 
+    // Map the custom transformation zone results to our standard codes
+    if (transformationZone) {
+      const transformationZoneArray = [transformationZone];
+      conclusionCodes = mapResults(transformationZoneArray, customCytologyCodes, standardCytologyCodes, conclusionCodes);
+    }
     // Map the custom HPV results to our standard codes
     conclusionCodes = mapResults(hpvResults, customHpvCodes, standardHpvCodes, conclusionCodes);
 
