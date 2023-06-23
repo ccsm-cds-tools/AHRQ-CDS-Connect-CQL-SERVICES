@@ -2,15 +2,17 @@ import { ScreeningAndManagementTestType } from 'ccsm-cds-with-tests/fhir/ValueSe
 import { CervicalCytologyResult } from 'ccsm-cds-with-tests/fhir/ValueSet/CervicalCytologyResult.js';
 import { HpvTestResult } from 'ccsm-cds-with-tests/fhir/ValueSet/HpvTestResult.js';
 import { CervicalHistologyResult } from 'ccsm-cds-with-tests/fhir/ValueSet/CervicalHistologyResult.js';
+import { PertinentProcedureShortList } from 'ccsm-cds-with-tests/fhir/ValueSet/PertinentProcedureShortList.js';
 
 let standardTestTypeCodes = reformatValueSet(ScreeningAndManagementTestType);
 let standardCytologyCodes = reformatValueSet(CervicalCytologyResult);
 let standardHpvCodes = reformatValueSet(HpvTestResult);
 let standardHistologyCodes = reformatValueSet(CervicalHistologyResult);
+let standardProcedureCodes = reformatValueSet(PertinentProcedureShortList);
 
 /**
  * Take a FHIR ValueSet resource and reformat to return just the codings.
- * @param {Object} ValueSet - A FHIR ValueSet resource 
+ * @param {Object} ValueSet - A FHIR ValueSet resource
  * @returns {Object} - An object containing just the codings that appear in the value set
  */
 function reformatValueSet(ValueSet) {
@@ -24,7 +26,7 @@ function reformatValueSet(ValueSet) {
         display: cv.designation[0].value
       }
     };
-  },{});
+  }, {});
   return reformatted;
 }
 
@@ -182,8 +184,8 @@ const customHpvCodes = {
 // - ECT.14005.10 - Squamous Cell Carcinoma
 // - ECT.14005.11 - Adenocarcinoma
 // - ECT.14005.99 - Other
-// - ECT.14005.10000 - SCJ Not Visible 
-// - ECT.14005.10001 - SCJ Partially Visible, Fully Visible 
+// - ECT.14005.10000 - SCJ Not Visible
+// - ECT.14005.10001 - SCJ Partially Visible, Fully Visible
 const customHistologyCodes = {
   'ECT.14005.1': {
     Value: 'Normal',
@@ -291,6 +293,27 @@ const customEccCodes = {
   }
 };
 
+// Extract Procedures from FindingType
+// ## FindingType
+// >Can be null.
+
+// Maps to Category values in ECT, 14001 - CCS - TRANSCRIBED FINDING TYPES
+
+// ECT.14001.1 - Pap Smear
+// ECT.14001.2 - HPV
+// ECT.14001.3 - Transformation Zone
+// ECT.14001.4 - Colposcopy
+// ECT.14001.5 - Excision
+// ECT.14001.6 - Ablation
+// ECT.14001.7 - Endometrial Biopsy
+// ECT.14001.8 - Endocervical Curettage
+const procedureMappings = {
+  'ECT.14001.4': 'Colposcopy',
+  'ECT.14001.5': 'Cervix Excision',
+  'ECT.14001.6': 'Cervix Ablation',
+  'ECT.14001.8': 'Endocervical Curettage'
+};
+
 /**
  * Translate the response from the custom API into FHIR and updated the array of patient data
  * @param {Object[]} customApiResponse - Not in FHIR
@@ -315,7 +338,7 @@ export function translateResponse(customApiResponse, patientData) {
     // Find the DiagnosticReport referenced by this order
     const diagnosticReportIndex = patientData.findIndex(pd => {
       return (
-        pd.resourceType === 'DiagnosticReport' && 
+        pd.resourceType === 'DiagnosticReport' &&
         pd.identifier.filter(id => id.value === orderId).length > 0
       );
     });
@@ -330,6 +353,9 @@ export function translateResponse(customApiResponse, patientData) {
     if ((colposcopyResults.length > 0) || (endocervicalCuretageResults.length > 0)) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
+
+    // Is findingType always provided?
+    let procedureCode = standardProcedureCodes[procedureMappings[findingType?.ID]];
 
     let conclusionCodes = [];
 
@@ -369,6 +395,31 @@ export function translateResponse(customApiResponse, patientData) {
       patientData[diagnosticReportIndex].conclusionCode.forEach(drcc => {
         console.log('dr mapped conconclusion code: ', drcc.coding[0], drcc.text);
       });
+
+      // Create a Procedure resource based on DiagnosticReport
+      if (procedureCode) {
+        const originalDiagnosticReport = patientData[diagnosticReportIndex];
+        let newProcedure =
+        {
+          'resourceType': 'Procedure',
+          'id': originalDiagnosticReport.id,
+          'subject': originalDiagnosticReport.subject,
+          'status': 'completed',
+          'code': procedureCode,
+          'performedDateTime': originalDiagnosticReport.effectiveDateTime
+        };
+
+        if (newProcedure.id.length > 54) {
+          newProcedure.id = newProcedure.id.substring(0, 54) + '-procedure';
+        } else {
+          newProcedure.id += '-procedure';
+        }
+
+        patientData.push(newProcedure);
+
+        console.log('procedure: ', newProcedure);
+        console.log('procedure code: ', procedureCode);
+      }
     }
   });
 
