@@ -301,7 +301,7 @@ const customEccCodes = {
 const procedureMappings = {
   'ECT.14001.4': 'Colposcopy',
   'ECT.14001.5': 'Cervix Excision',
-  'ECT.14001.6': 'Cervical Histology'
+  'ECT.14001.6': 'Cervix Ablation'
 };
 
 /**
