@@ -1,0 +1,39 @@
+{
+    "Order": [
+        {
+            "OrderId": "378231457",
+            "NextDueDate": null,
+            "OrderedDate": "2023-05-22T00:00:00Z",
+            "ResultDate": "2018-12-31T00:00:00Z",
+            "TransformationZone": null,
+            "FindingType": {
+                "ID": "ECT.14001.5",
+                "Value": "Excision"
+            },
+            "PapResults": [],
+            "TrackingStatus": null,
+            "FollowUpActions": [],
+            "ExcisionTypes": [],
+            "Provider": null,
+            "HPVResults": [],
+            "ColposcopyResults": [],
+            "ExcisionResults": [
+                {
+                    "ID": "ECT.14006.5",
+                    "Value": "CIN3"
+                }
+            ],
+            "EndometrialBiopsyResults": [],
+            "EndocervicalCuretageResults": [],
+            "PapAbnormality": null,
+            "ColposcopyAbnormality": null,
+            "EndometrialBiopsyAbnormality": null,
+            "EndocervicalCurettageAbnormality": null,
+            "ExcisionAbnormality": {
+                "ID": "ECT.14013.1",
+                "Value": "Yes"
+            },
+            "HPVAbnormality": null
+        }
+    ]
+}
