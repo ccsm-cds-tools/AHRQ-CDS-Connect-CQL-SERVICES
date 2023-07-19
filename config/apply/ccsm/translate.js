@@ -422,7 +422,7 @@ export function translateResponse(customApiResponse, patientData) {
         patientData.push(newProcedure);
 
         console.log('procedure: ', newProcedure);
-        console.log('procedure code: ', procedureCode);
+        console.log('procedure code: ', procedureCoding);
       }
     }
   });
