@@ -269,7 +269,7 @@ const customEccCodes = {
   },
   'ECT.14015.3': {
     Value: 'HSIL',
-    mapping: 'HSIL, Unspecified'
+    mapping: 'CIN 3'
   },
   'ECT.14015.4': {
     Value: 'AIS',
