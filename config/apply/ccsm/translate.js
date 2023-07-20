@@ -355,7 +355,8 @@ export function translateResponse(customApiResponse, patientData) {
     }
 
     // Is findingType always provided?
-    let procedureCode = standardProcedureCodes[procedureMappings[findingType?.ID]];
+    let procedureText = procedureMappings[findingType?.ID];
+    let procedureCoding = standardProcedureCodes[procedureText];
 
     let conclusionCodes = [];
 
@@ -397,7 +398,7 @@ export function translateResponse(customApiResponse, patientData) {
       });
 
       // Create a Procedure resource based on DiagnosticReport
-      if (procedureCode) {
+      if (procedureCoding) {
         const originalDiagnosticReport = patientData[diagnosticReportIndex];
         let newProcedure =
         {
@@ -405,7 +406,10 @@ export function translateResponse(customApiResponse, patientData) {
           'id': originalDiagnosticReport.id,
           'subject': originalDiagnosticReport.subject,
           'status': 'completed',
-          'code': procedureCode,
+          'code': {
+            'coding': [procedureCoding],
+            'text': procedureText
+          },
           'performedDateTime': originalDiagnosticReport.effectiveDateTime
         };
 
@@ -418,7 +422,7 @@ export function translateResponse(customApiResponse, patientData) {
         patientData.push(newProcedure);
 
         console.log('procedure: ', newProcedure);
-        console.log('procedure code: ', procedureCode);
+        console.log('procedure code: ', procedureCoding);
       }
     }
   });
