@@ -23,7 +23,7 @@ describe('translateResponse', () => {
     });
   });
 
-  describe('Parse excision results that are not AIS or histologic cancer', () => {
+  describe('parse excision results', () => {
     it('should ignore excision results that do not show AIS or histologic cancer', function () {
       translateResponse(customApiResponse, patientData);
       const diagnosticReports = patientData.filter(pd => pd.resourceType === 'DiagnosticReport');
@@ -31,9 +31,7 @@ describe('translateResponse', () => {
       expect(diagnosticReports.length).to.equal(1);
       expect(diagnosticReports.some(p => p.code.coding.some(coding => coding.code === '65753-6'))).to.be.false;
     });
-  });
 
-  describe('Parse AIS excision results', () => {
     it('should map an AIS excision result to a biopsy', function () {
       customApiResponse.Order[0].ExcisionResults = 
         [
@@ -49,9 +47,7 @@ describe('translateResponse', () => {
       expect(diagnosticReports.some(p => p.code.coding.some(coding => coding.code === '65753-6'))).to.be.true;
       expect(diagnosticReports.some(p => p.conclusionCode.some(cC => cC.coding.some(coding => coding.code === '254890008')))).to.be.true;
     });
-  });
 
-  describe('Parse histologic cancer excision results', () => {
     it('should map a histologic cancer excision result to a biopsy', function () {
       customApiResponse.Order[0].ExcisionResults = 
         [
