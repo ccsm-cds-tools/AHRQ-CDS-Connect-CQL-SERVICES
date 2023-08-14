@@ -261,22 +261,6 @@ const customHistologyCodes = {
 // ECT.14006.13 - Margins Positive
 // ECT.14006.99 - Other
 const customExcisionCodes = {
-  'ECT.14006.1': {
-    Value: 'Normal',
-    mapping: null
-  },
-  'ECT.14006.3': {
-    Value: 'CIN1',
-    mapping: null
-  },
-  'ECT.14006.4': {
-    Value: 'CIN2',
-    mapping: null
-  },
-  'ECT.14006.5': {
-    Value: 'CIN3',
-    mapping: null
-  },
   'ECT.14006.6': {
     Value: 'AIS',
     mapping: 'AIS'
@@ -288,18 +272,6 @@ const customExcisionCodes = {
   'ECT.14006.11': {
     Value: 'Adenocarcinoma',
     mapping: 'Cancer'
-  },
-  'ECT.14006.12': {
-    Value: 'Margins Negative',
-    mapping: null
-  },
-  'ECT.14006.13': {
-    Value: 'Margins Positive',
-    mapping: null
-  },
-  'ECT.14006.99': {
-    Value: 'Other',
-    mapping: null
   }
 };
 
@@ -411,7 +383,7 @@ export function translateResponse(customApiResponse, patientData) {
     }
     let ExcisionResultsShowAisOrCancer = 
       excisionResults.some(r => {
-        const AisOrCancerCodes = ['ECT.14006.6', 'ECT.14006.10', 'ECT.14006.11'];
+        const AisOrCancerCodes = Object.keys(customExcisionCodes);
         return AisOrCancerCodes.includes(r.ID);
       });
     if ((colposcopyResults.length > 0) || (endocervicalCuretageResults.length > 0) || (excisionResults.length > 0 && ExcisionResultsShowAisOrCancer)) {
