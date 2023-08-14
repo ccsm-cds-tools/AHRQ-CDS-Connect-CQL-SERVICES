@@ -245,6 +245,36 @@ const customHistologyCodes = {
   }
 };
 
+// ## ExcisionResults
+// >Can be null.
+
+// Maps to category values in ECT, 14006 - CCS - TRANSCRIBED EXCISION RESULTS
+
+// ECT.14006.1 - Normal
+// ECT.14006.3 - CIN1
+// ECT.14006.4 - CIN2
+// ECT.14006.5 - CIN3
+// ECT.14006.6 - AIS
+// ECT.14006.10 - Squamous Cell Carcinoma
+// ECT.14006.11 - Adenocarcinoma
+// ECT.14006.12 - Margins Negative
+// ECT.14006.13 - Margins Positive
+// ECT.14006.99 - Other
+const customExcisionCodes = {
+  'ECT.14006.6': {
+    Value: 'AIS',
+    mapping: 'AIS'
+  },
+  'ECT.14006.10': {
+    Value: 'Squamous Cell Carcinoma',
+    mapping: 'Cancer'
+  },
+  'ECT.14006.11': {
+    Value: 'Adenocarcinoma',
+    mapping: 'Cancer'
+  }
+};
+
 // ## EndocervicalCuretageResults
 // >Can be null.
 
@@ -332,6 +362,7 @@ export function translateResponse(customApiResponse, patientData) {
       PapResults: papResults,
       HPVResults: hpvResults,
       ColposcopyResults: colposcopyResults,
+      ExcisionResults: excisionResults,
       EndocervicalCuretageResults: endocervicalCuretageResults
     } = order;
 
@@ -350,7 +381,12 @@ export function translateResponse(customApiResponse, patientData) {
     if (hpvResults.length > 0) {
       codings.push(standardTestTypeCodes['HPV']);
     }
-    if ((colposcopyResults.length > 0) || (endocervicalCuretageResults.length > 0)) {
+    let ExcisionResultsShowAisOrCancer = 
+      excisionResults.some(r => {
+        const AisOrCancerCodes = Object.keys(customExcisionCodes);
+        return AisOrCancerCodes.includes(r.ID);
+      });
+    if ((colposcopyResults.length > 0) || (endocervicalCuretageResults.length > 0) || (excisionResults.length > 0 && ExcisionResultsShowAisOrCancer)) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
 
@@ -376,6 +412,11 @@ export function translateResponse(customApiResponse, patientData) {
 
     // Map the custom ECC results to our standard codes
     conclusionCodes = mapResults(endocervicalCuretageResults, customEccCodes, standardHistologyCodes, conclusionCodes);
+
+    // Map the custom excision results to our standard codes
+    if (ExcisionResultsShowAisOrCancer) {
+      conclusionCodes = mapResults(excisionResults, customExcisionCodes, standardHistologyCodes, conclusionCodes);
+    }
 
     if (diagnosticReportIndex !== -1) {
       console.log('Found the diagnostic report reference');
