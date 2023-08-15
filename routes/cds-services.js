@@ -221,7 +221,7 @@ async function call(req, res, next) {
     let searchRequests = [];
     req.app.locals.altFhirQueries.forEach(afq => {
       console.log('URL template: ', afq);
-      const { translateResponse } = res.locals?.apply ? res.locals.apply : { translateResponse(input, _data){return input;} };
+      const { translateResponse } = res.locals?.apply ? res.locals.apply : { translateResponse(input, _data) { return input; } };
       let searchURL = afq;
       // Replace the context placeholders in the queries
       Object.keys(req.body.context || {}).forEach(contextKey => {
@@ -238,13 +238,13 @@ async function call(req, res, next) {
         .then(result => {
           let patientData = bundle.entry.map(b => b.resource);
           let translated = translateResponse(result, patientData);
-          bundle.entry = translated.map(tr => ({resource: tr}));
+          bundle.entry = translated.map(tr => ({ resource: tr }));
         });
       searchRequests.push(searchRequest);
     });
     try {
       await Promise.all(searchRequests);
-    } catch(err) {
+    } catch (err) {
       res.sendStatus(412);
       return;
     }
@@ -258,11 +258,442 @@ async function call(req, res, next) {
     console.log(' -', rt, rid);
   });
 
-  let cards= [];
+  let cards = [];
   if (res.locals?.apply) { // $apply a PlanDefinition
 
     // Gather resources
     let patientData = bundle.entry.map(b => b.resource);
+
+    // MODIFY PATIENT DATA HERE
+    const idsToExclude = [
+      '14753', // Hysterecomy procedure
+      '14802', // Colposcopy procedure
+      '14803', // Excision procedure
+      '14754', // Cytopath Diagnostic Report (no relevant codes)
+      '14852', // Biopsy Observation - with result
+      // '14755', // Biopsy DR
+    ];
+
+    // Remove extraneous resources
+    // patientData = patientData.filter(resource => !idsToExclude.includes(resource.id));
+
+    // Remove extraneous codes
+    // patientData.map((resource) => {
+    //   if (resource.id === '14755') {
+    //     resource.code.coding = resource.code.coding[0];
+    //   }
+    //   return resource;
+    // });
+
+    // patientData.forEach((resource) => {
+    //   if (resource.id === '14755') {
+    //     let singleCode = resource.code.coding[0];
+    //     resource.code.coding = singleCode;
+    //   }
+    // });
+    patientData =
+      [
+        {
+          "resourceType": "Patient",
+          "id": "14752",
+          "meta": {
+            "versionId": "2",
+            "lastUpdated": "2023-08-01T19:22:09.000+00:00",
+            "source": "#gyCmEFrjz5sLpw4a"
+          },
+          "text": {
+            "status": "generated",
+            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><div class=\"hapiHeaderText\">Fiftythree <b>MITRE </b></div><table class=\"hapiPropertyTable\"><tbody><tr><td>Identifier</td><td>PGHJRLT7V89SBGH</td></tr><tr><td>Address</td><td><span>2811 Front Street North </span><br/><span>HOUSTON </span><span>PA </span></td></tr><tr><td>Date of birth</td><td><span>19 August 1980</span></td></tr></tbody></table></div>"
+          },
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race",
+              "extension": [
+                {
+                  "url": "ombCategory",
+                  "valueCoding": {
+                    "system": "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+                    "code": "UNK",
+                    "display": "Unknown"
+                  }
+                },
+                {
+                  "url": "text",
+                  "valueString": "Unknown"
+                }
+              ]
+            },
+            {
+              "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity",
+              "extension": [
+                {
+                  "url": "text",
+                  "valueString": "Unknown"
+                }
+              ]
+            },
+            {
+              "url": "http://open.epic.com/FHIR/StructureDefinition/extension/legal-sex",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "urn:oid:1.2.840.114350.1.13.88.3.7.10.698084.130.657370.2199",
+                    "code": "female",
+                    "display": "female"
+                  }
+                ]
+              }
+            },
+            {
+              "url": "http://open.epic.com/FHIR/StructureDefinition/extension/sex-for-clinical-use",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "urn:oid:1.2.840.114350.1.13.88.3.7.10.698084.130.657370.2199",
+                    "code": "female",
+                    "display": "female"
+                  }
+                ]
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+              "valueCode": "F"
+            }
+          ],
+          "identifier": [
+            {
+              "use": "usual",
+              "type": {
+                "text": "CEID"
+              },
+              "system": "urn:oid:1.2.840.114350.1.13.88.3.7.3.688884.100",
+              "value": "PGHJRLT7V89SBGH"
+            },
+            {
+              "use": "usual",
+              "type": {
+                "text": "EPIC"
+              },
+              "system": "urn:oid:2.16.840.1.113883.3.552.1.3.11.13.1.8.2",
+              "value": "741498901"
+            },
+            {
+              "use": "usual",
+              "type": {
+                "text": "EXTERNAL"
+              },
+              "system": "urn:oid:1.2.840.114350.1.13.88.3.7.2.698084",
+              "value": "691489956"
+            },
+            {
+              "use": "usual",
+              "type": {
+                "text": "FHIR"
+              },
+              "system": "http://open.epic.com/FHIR/StructureDefinition/patient-dstu2-fhir-id",
+              "value": "TFIjvnQFjFQrsaMKZxSXWwL8YYAsjbwha8gt8wJ86xgsB"
+            },
+            {
+              "use": "usual",
+              "type": {
+                "text": "FHIR STU3"
+              },
+              "system": "http://open.epic.com/FHIR/StructureDefinition/patient-fhir-id",
+              "value": "eq54QN5KW0-Nh9A6sVMZ-ytxkYDmEbaKo5Am3HWTeUkw3"
+            },
+            {
+              "use": "usual",
+              "type": {
+                "text": "INTERNAL"
+              },
+              "system": "urn:oid:1.2.840.114350.1.13.88.3.7.2.698084",
+              "value": " 691489956"
+            },
+            {
+              "use": "usual",
+              "type": {
+                "text": "UPM"
+              },
+              "system": "urn:oid:2.16.840.1.113883.3.552.1.3.11.11.1.8.2",
+              "value": "100002218"
+            },
+            {
+              "use": "old",
+              "value": "eq54QN5KW0-Nh9A6sVMZ-ytxkYDmEbaKo5Am3HWTeUkw3"
+            }
+          ],
+          "active": true,
+          "name": [
+            {
+              "use": "official",
+              "text": "Fiftythree Mitre",
+              "family": "Mitre",
+              "given": [
+                "Fiftythree"
+              ]
+            },
+            {
+              "use": "usual",
+              "text": "Fiftythree Mitre",
+              "family": "Mitre",
+              "given": [
+                "Fiftythree"
+              ]
+            }
+          ],
+          "telecom": [
+            {
+              "system": "phone",
+              "value": "412-555-5858",
+              "use": "home"
+            },
+            {
+              "system": "phone",
+              "value": "412-555-5756",
+              "use": "work"
+            },
+            {
+              "system": "email",
+              "value": "none@upmc.edu",
+              "rank": 1
+            }
+          ],
+          "gender": "female",
+          "birthDate": "1980-08-19",
+          "deceasedBoolean": false,
+          "address": [
+            {
+              "use": "old",
+              "line": [
+                "2811 Front Street North"
+              ],
+              "city": "HOUSTON",
+              "state": "PA",
+              "postalCode": "15342"
+            },
+            {
+              "use": "home",
+              "line": [
+                "2811 Front Street North"
+              ],
+              "city": "HOUSTON",
+              "state": "PA",
+              "postalCode": "15342"
+            }
+          ],
+          "managingOrganization": {
+            "display": "UNIV OF PITTSBURGH PHYSICIANS"
+          }
+        },
+        {
+          "resourceType": "Observation",
+          "id": "14852",
+          "meta": {
+            "versionId": "3",
+            "lastUpdated": "2023-08-15T07:02:53.000+00:00",
+            "source": "#hAy9C3jG5xHEnb2a"
+          },
+          "status": "final",
+          "category": [
+            {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                  "code": "laboratory"
+                }
+              ]
+            }
+          ],
+          "code": {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "65753-6",
+                "display": "Cervix Pathology biopsy report"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/14752"
+          },
+          "effectiveDateTime": "2018-09-30T04:00:00Z",
+          "valueCodeableConcept": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "165324008",
+                "display": "Biopsy result normal (finding)"
+              }
+            ]
+          }
+        },
+        {
+          "resourceType": "DiagnosticReport",
+          "id": "14755",
+          "meta": {
+            "versionId": "2",
+            "lastUpdated": "2023-08-15T05:27:56.000+00:00",
+            "source": "#D43v12kUxcFyjRlp"
+          },
+          "text": {
+            "status": "generated",
+            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><div class=\"hapiHeaderText\"> GYNECOLOGICAL PATHOLOGY REPORT, TISSUE </div><table class=\"hapiPropertyTable\"><tbody><tr><td>Status</td><td>FINAL</td></tr><tr><td>Issued</td><td> 30 September 2018 04:00:00 </td></tr></tbody></table></div>"
+          },
+          "identifier": [
+            {
+              "use": "official",
+              "type": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                    "code": "PLAC",
+                    "display": "Placer Identifier"
+                  }
+                ],
+                "text": "Placer Identifier"
+              },
+              "system": "urn:oid:1.2.840.114350.1.13.88.3.7.2.798268",
+              "value": "378231469"
+            },
+            {
+              "use": "old",
+              "value": "egBb46SeRCf9GhkcEIiAjrhx-ovQ8Lx9Pe1IcihFdg3U3"
+            }
+          ],
+          "status": "final",
+          "category": [
+            {
+              "coding": [
+                {
+                  "system": "urn:oid:1.2.840.114350.1.13.88.3.7.10.798268.30",
+                  "code": "CYTOPATH"
+                }
+              ],
+              "text": "Cytopathology"
+            },
+            {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+                  "code": "LAB",
+                  "display": "Laboratory"
+                }
+              ],
+              "text": "Laboratory"
+            }
+          ],
+          "code": {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "65753-6",
+                "display": "Cervix Pathology biopsy report"
+              }//,
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.116",
+              //   "code": "78551"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.3000",
+              //   "code": "191189"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.3090",
+              //   "code": "GYN FINAL REPORT"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.157",
+              //   "code": "2890018"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.2011",
+              //   "code": "14516X"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.2016",
+              //   "code": "14516"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.16",
+              //   "code": "CP0141"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.3001",
+              //   "code": "191189"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.2100",
+              //   "code": "14516"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.196",
+              //   "code": "4900020OI"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.2200",
+              //   "code": "14516"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.2300",
+              //   "code": "14516"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.196",
+              //   "code": "OGHGYN"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.196",
+              //   "code": "4900009O"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.196",
+              //   "code": "UTERUS"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.594",
+              //   "code": "GYN"
+              // },
+              // {
+              //   "system": "urn:oid:1.2.840.114350.1.13.88.3.7.5.737384.594",
+              //   "code": "PTHGYN"
+              // }
+            ],
+            "text": "GYNECOLOGICAL PATHOLOGY REPORT, TISSUE"
+          },
+          "subject": {
+            "reference": "Patient/14752",
+            "display": "Mitre, Fiftythree"
+          },
+          "encounter": {
+            "identifier": {
+              "use": "usual",
+              "system": "urn:oid:1.2.840.114350.1.13.88.3.7.3.698084.8",
+              "value": "2590100137883"
+            },
+            "display": "Appointment"
+          },
+          "effectiveDateTime": "2018-09-30T04:00:00Z",
+          "issued": "2018-09-30T04:00:00Z",
+          "performer": [
+            {
+              "display": "Historical Provider"
+            },
+            {
+              "display": "COPATH"
+            }
+          ]
+        }
+      ];
+
+
+    console.log('PATIENT DATA');
+    console.log(JSON.stringify(patientData, null, 4));
+    // console.dir(patientData);
+
+
+
+
     const { elmJson, cdsResources, valueSetJson, formatCards, collapseIntoOne } = res.locals.apply;
     let resolver = simpleResolver([...cdsResources, ...patientData], true);
     const planDefinition = resolver('PlanDefinition/' + hook._config.apply.planDefinition)[0];
@@ -275,10 +706,14 @@ async function call(req, res, next) {
     };
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
 
+    console.log('REQUEST GROUP: ', RequestGroup);
+    console.log('OTHER RESOURCES: ', otherResources);
     // If RequestGroup has actions, convert them to properly-formatted CDS Hooks cards
     if (RequestGroup?.action) {
+      console.log('REQUEST GROUP HAS ACTIONS');
       // Pass action array into extractCards recursive function
       let newCards = formatCards(RequestGroup.action, otherResources).flat();
+      console.log('NEW CARDS: ', newCards);
       cards.push(...newCards);
     }
 
@@ -296,7 +731,7 @@ async function call(req, res, next) {
       console.log(JSON.stringify(card.suggestions, null, 2));
     });
     console.log();
-    
+
   } else { // Evaluate CQL expressions (not tied to any PlanDefinition)
 
     // Get the lib from the res.locals (thanks, middleware!)
@@ -306,14 +741,14 @@ async function call(req, res, next) {
     let patientSource;
     const usingFHIR = lib.source.library.usings.def.find(d => d.url == 'http://hl7.org/fhir' || d.localIdentifier == 'FHIR');
     switch (usingFHIR.version) {
-    case '1.0.2': patientSource = PatientSource.FHIRv102(); break;
-    case '3.0.0': patientSource = PatientSource.FHIRv300(); break;
-    case '4.0.0': patientSource = PatientSource.FHIRv400(); break;
-    case '4.0.1': patientSource = PatientSource.FHIRv401(); break;
-    default:
-      logError(`Library does not use any supported data models: ${lib.source.library.usings.def}`);
-      sendError(res, 501, `Not Implemented: Unsupported data model (must be FHIR 1.0.2, 3.0.0, 4.0.0, or 4.0.1`);
-      return;
+      case '1.0.2': patientSource = PatientSource.FHIRv102(); break;
+      case '3.0.0': patientSource = PatientSource.FHIRv300(); break;
+      case '4.0.0': patientSource = PatientSource.FHIRv400(); break;
+      case '4.0.1': patientSource = PatientSource.FHIRv401(); break;
+      default:
+        logError(`Library does not use any supported data models: ${lib.source.library.usings.def}`);
+        sendError(res, 501, `Not Implemented: Unsupported data model (must be FHIR 1.0.2, 3.0.0, 4.0.0, or 4.0.1`);
+        return;
     }
 
     // Load the data into the patient source

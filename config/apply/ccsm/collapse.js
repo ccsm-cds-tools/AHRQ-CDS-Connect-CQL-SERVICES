@@ -10,6 +10,8 @@ export function collapseIntoOne(cards, useHtml=false) {
   const summary = 'Cervical Cancer Decision Support';
   let justOneCard = [{}];
 
+  console.log('CARDS',cards);
+
   // Try to consolidate the recommendations
   let decisionAids = cards.filter(c => c.summary.toLowerCase().includes('decision aids'));
   let errors = cards.filter(c => c.summary.toLowerCase().includes('errors'));
