@@ -691,9 +691,6 @@ async function call(req, res, next) {
     console.log(JSON.stringify(patientData, null, 4));
     // console.dir(patientData);
 
-
-
-
     const { elmJson, cdsResources, valueSetJson, formatCards, collapseIntoOne } = res.locals.apply;
     let resolver = simpleResolver([...cdsResources, ...patientData], true);
     const planDefinition = resolver('PlanDefinition/' + hook._config.apply.planDefinition)[0];
