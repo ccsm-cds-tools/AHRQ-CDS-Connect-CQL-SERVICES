@@ -6,7 +6,7 @@ export const prefetch = {
   'MedicationRequest': 'MedicationRequest?patient={{context.patientId}}&status=active&intent=order',
   'ProcedureOrders': 'Procedure?patient={{context.patientId}}&category=103693007',
   'ProcedureSurgerical': 'Procedure?patient={{context.patientId}}&category=387713003',
-  'DiagnosticReport': 'DiagnosticReport?patient={{context.patientId}}&category=http://terminology.hl7.org/CodeSystem/v2-0074|LAB',
+  'DiagnosticReport': 'DiagnosticReport?patient={{context.patientId}}&category=LAB',
   'Encounter': 'Encounter/{{context.encounterId}}',
   'Immunization': 'Immunization?patient={{context.patientId}}&status=completed'
 };
