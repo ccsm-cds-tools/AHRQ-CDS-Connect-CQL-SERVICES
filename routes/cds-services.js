@@ -422,8 +422,18 @@ function addDiagnosticReportToBundle(customApiResponse, bundle, client) {
   const orders = customApiResponse.Order ?? [];
   orders.forEach(order => {
     const searchURL = `DiagnosticReport?identifier=${order.OrderId}`;
+    console.log(`Request URL: ${searchURL}`)
     client.request(searchURL, { pageLimit: 0, flat: true })
-      .then(result => addResponseToBundle(result, bundle));
+      .then(response => {
+        if (response == null) {
+          console.log('Result is null')
+        } else {
+          response.resourceType === 'Bundle' ?
+            console.log(`Result count: ${response.entry.length}`) :
+            console.log(`Result is ${response.resourceType}`)
+        }
+        addResponseToBundle(response, bundle)
+      });
   });
 }
 
