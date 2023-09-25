@@ -420,6 +420,7 @@ function getFHIRClient(req, res) {
 
 function addDiagnosticReportToBundle(customApiResponse, bundle, client) {
   const orders = customApiResponse.Order ?? [];
+  console.log(`Orders count: ${orders.length}`);
   orders.forEach(order => {
     const searchURL = `DiagnosticReport?identifier=${order.OrderId}`;
     console.log(`Request URL: ${searchURL}`)
