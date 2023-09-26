@@ -1,6 +1,6 @@
-// Portions of this file are based on the original [CQL Services](https://github.com/AHRQ-CDS/AHRQ-CDS-Connect-CQL-SERVICES) 
-// developed for the [CDS Connect](https://cds.ahrq.gov/cdsconnect) project, sponsored by the 
-// [Agency for Healthcare Research and Quality](https://www.ahrq.gov/) (AHRQ), and developed under contract with AHRQ by 
+// Portions of this file are based on the original [CQL Services](https://github.com/AHRQ-CDS/AHRQ-CDS-Connect-CQL-SERVICES)
+// developed for the [CDS Connect](https://cds.ahrq.gov/cdsconnect) project, sponsored by the
+// [Agency for Healthcare Research and Quality](https://www.ahrq.gov/) (AHRQ), and developed under contract with AHRQ by
 // [MITRE's Health FFRDC](https://www.mitre.org/our-impact/rd-centers/health-ffrdc).
 // Copyright 2016-2018 Agency for Healthcare Research and Quality.
 // Licensed under the Apache License, Version 2.0 (the "License").
@@ -236,6 +236,7 @@ async function call(req, res, next) {
       console.log('searchURL ', searchURL);
       const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
         .then(result => {
+          addDiagnosticReportToBundle(result, bundle, getFHIRClient(req, res));
           let patientData = bundle.entry.map(b => b.resource);
           let translated = translateResponse(result, patientData);
           bundle.entry = translated.map(tr => ({resource: tr}));
@@ -296,7 +297,7 @@ async function call(req, res, next) {
       console.log(JSON.stringify(card.suggestions, null, 2));
     });
     console.log();
-    
+
   } else { // Evaluate CQL expressions (not tied to any PlanDefinition)
 
     // Get the lib from the res.locals (thanks, middleware!)
@@ -415,6 +416,26 @@ function getFHIRClient(req, res) {
     }
     return fhirclient(req, res).client(state);
   }
+}
+
+function addDiagnosticReportToBundle(customApiResponse, bundle, client) {
+  const orders = customApiResponse.Order ?? [];
+  console.log(`Orders count: ${orders.length}`);
+  orders.forEach(order => {
+    const searchURL = `DiagnosticReport?identifier=${order.OrderId}`;
+    console.log(`Request URL: ${searchURL}`);
+    client.request(searchURL, { pageLimit: 0, flat: true })
+      .then(response => {
+        if (response == null) {
+          console.log('Result is null');
+        } else {
+          response.resourceType === 'Bundle' ?
+            console.log(`Result count: ${response.entry.length}`) :
+            console.log(`Result is ${response.resourceType}`);
+        }
+        addResponseToBundle(response, bundle);
+      });
+  });
 }
 
 function addResponseToBundle(response, bundle) {
