@@ -235,7 +235,7 @@ async function call(req, res, next) {
       console.log('searchURL ', searchURL);
 
       const result = await client.request(searchURL, { pageLimit: 0, flat: true });
-      await addDiagnosticReportToBundle(result, bundle, getFHIRClient(req, res));
+      await addDiagnosticReportToBundle(result, bundle, client);
 
       let patientData = bundle.entry.map(b => b.resource);
       let translated = translateResponse(result, patientData);
