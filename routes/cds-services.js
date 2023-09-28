@@ -421,17 +421,21 @@ function getFHIRClient(req, res) {
 async function addDiagnosticReportToBundle(customApiResponse, bundle, client) {
   const orders = customApiResponse.Order ?? [];
   console.log(`Orders count: ${orders.length}`);
-  for (let order of orders) {
-    const searchURL = `DiagnosticReport/${order.OrderId}`;
-    console.log(`Request URL: ${searchURL}`);
-    const response = await client.request(searchURL);
-    if (response == null) {
-      console.log('Result is null');
-    } else {
-      console.log(`Read ${response.id}`);
-    }
-    addResponseToBundle(response, bundle);
-  }
+  let orderPromises = orders.map(order => {
+    const requestURL = `DiagnosticReport/${order.OrderId}`;
+    console.log(`Request URL: ${requestURL}`);
+
+    client.request(requestURL)
+      .then(response => {
+        if (response == null) {
+          console.log('Result is null');
+        } else {
+          console.log(`Read ${response.id}`);
+        }
+        addResponseToBundle(response, bundle);
+    });
+  });
+  await Promise.all(orderPromises);
 }
 
 function addResponseToBundle(response, bundle) {
