@@ -424,8 +424,7 @@ async function addDiagnosticReportToBundle(customApiResponse, bundle, client) {
   let orderPromises = orders.map(order => {
     const requestURL = `DiagnosticReport/${order.OrderId}`;
     console.log(`Request URL: ${requestURL}`);
-
-    client.request(requestURL)
+    return client.request(requestURL)
       .then(response => {
         if (response == null) {
           console.log('Result is null');
@@ -433,7 +432,7 @@ async function addDiagnosticReportToBundle(customApiResponse, bundle, client) {
           console.log(`Read ${response.id}`);
         }
         addResponseToBundle(response, bundle);
-    });
+      });
   });
   await Promise.all(orderPromises);
 }
