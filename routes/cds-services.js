@@ -420,7 +420,7 @@ function getFHIRClient(req, res) {
 
 async function addDiagnosticReportToBundle(customApiResponse, bundle, client) {
   const orders = customApiResponse.Order ?? [];
-  console.log(`Orders count: ${orders.length}`);
+
   let orderPromises = orders.map(order => {
     const requestURL = `DiagnosticReport/${order.OrderId}`;
     console.log(`Request URL: ${requestURL}`);
