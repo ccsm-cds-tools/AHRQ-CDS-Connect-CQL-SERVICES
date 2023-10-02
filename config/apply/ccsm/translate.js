@@ -344,6 +344,14 @@ const procedureMappings = {
   'ECT.14001.8': 'Endocervical Curettage'
 };
 
+// EPIC Code System for EpisodeOfCare Type
+const episodeOfCareTypeCodeSystem = [
+  'urn:oid:1.2.840.114350.1.13.88.2.7.2.726668', // PROD
+  'urn:oid:1.2.840.114350.1.13.88.3.7.2.726668' // COP
+]
+
+const snomedCtCodeSystem = 'http://snomed.info/sct'
+
 /**
  * Translate the response from the custom API into FHIR and updated the array of patient data
  * @param {Object[]} customApiResponse - Not in FHIR
@@ -375,13 +383,13 @@ export function translateResponse(customApiResponse, patientData) {
     });
 
     let codings = [];
-    if ((papResults.length > 0) || (transformationZone) ){
+    if ((papResults.length > 0) || (transformationZone)) {
       codings.push(standardTestTypeCodes['Cervical Cytology (Pap)']);
     }
     if (hpvResults.length > 0) {
       codings.push(standardTestTypeCodes['HPV']);
     }
-    let ExcisionResultsShowAisOrCancer = 
+    let ExcisionResultsShowAisOrCancer =
       excisionResults.some(r => {
         const AisOrCancerCodes = Object.keys(customExcisionCodes);
         return AisOrCancerCodes.includes(r.ID);
@@ -466,9 +474,42 @@ export function translateResponse(customApiResponse, patientData) {
         console.log('procedure code: ', procedureCoding);
       }
     }
+
+    translateEpisodeofCare(patientData);
   });
 
   return patientData;
+}
+
+function translateEpisodeofCare(patientData) {
+  patientData
+    .filter(pd => pd.resourceType === 'EpisodeOfCare')
+    .forEach(eoc => mapEpisodeOfCare(eoc));
+}
+
+
+function mapEpisodeOfCare(episodeOfCare) {
+  let pregnancyType, epicCoding;
+
+  pregnancyType = episodeOfCare.type?.find(type =>
+    type.some(coding => {
+      const isRequiredCode = episodeOfCareTypeCodeSystem.includes(coding.system) && coding.code == '6';
+      if (isRequiredCode) epicCoding = coding;
+      return isRequiredCode;
+    })
+  );
+
+  if (pregnancyType && epicCoding) {
+    pregnancyType.coding.push({
+      'system': snomedCtCodeSystem,
+      'code': '424525001',
+      'display': 'Antenatal care (regime/therapy)'
+    });
+
+    if (!pregnancyType.text) {
+      pregnancyType.text = epicCoding.display;
+    }
+  }
 }
 
 /**
