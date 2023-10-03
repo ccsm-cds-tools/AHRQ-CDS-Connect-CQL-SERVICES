@@ -474,14 +474,14 @@ export function translateResponse(customApiResponse, patientData) {
         console.log('procedure code: ', procedureCoding);
       }
     }
-
-    translateEpisodeofCare(patientData);
   });
+
+  translateEpisodeOfCare(patientData);
 
   return patientData;
 }
 
-function translateEpisodeofCare(patientData) {
+function translateEpisodeOfCare(patientData) {
   patientData
     .filter(resource => resource.resourceType === 'EpisodeOfCare')
     .forEach(episodeOfCare => mapEpisodeOfCare(episodeOfCare));
