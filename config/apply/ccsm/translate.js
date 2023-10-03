@@ -348,9 +348,15 @@ const procedureMappings = {
 const episodeOfCareTypeCodeSystem = [
   'urn:oid:1.2.840.114350.1.13.88.2.7.2.726668', // PROD
   'urn:oid:1.2.840.114350.1.13.88.3.7.2.726668' // COP
-]
+];
 
 const snomedCtCodeSystem = 'http://snomed.info/sct'
+
+const snomedPregnancyCare = {
+  'system': snomedCtCodeSystem,
+  'code': '424525001',
+  'display': 'Antenatal care (regime/therapy)'
+};
 
 /**
  * Translate the response from the custom API into FHIR and updated the array of patient data
@@ -508,11 +514,7 @@ function mapEpisodeOfCare(episodeOfCare) {
   );
 
   if (pregnancyType && epicCoding) {
-    pregnancyType.coding.push({
-      'system': snomedCtCodeSystem,
-      'code': '424525001',
-      'display': 'Antenatal care (regime/therapy)'
-    });
+    pregnancyType.coding.push(snomedPregnancyCare);
 
     if (!pregnancyType.text) {
       pregnancyType.text = epicCoding.display;
