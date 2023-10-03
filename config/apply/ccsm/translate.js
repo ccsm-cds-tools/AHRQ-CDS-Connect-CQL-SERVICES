@@ -483,19 +483,27 @@ export function translateResponse(customApiResponse, patientData) {
 
 function translateEpisodeofCare(patientData) {
   patientData
-    .filter(pd => pd.resourceType === 'EpisodeOfCare')
-    .forEach(eoc => mapEpisodeOfCare(eoc));
+    .filter(resource => resource.resourceType === 'EpisodeOfCare')
+    .forEach(episodeOfCare => mapEpisodeOfCare(episodeOfCare));
 }
 
-
+/**
+ * If EpisodeOfCare.type has specific Epic Code,
+ * Add SNOMED CT Pregnancy coding to EpisdoeOfCare.type
+ * @param {EpisodeOfCare} episodeOfCare
+ */
 function mapEpisodeOfCare(episodeOfCare) {
   let pregnancyType, epicCoding;
 
   pregnancyType = episodeOfCare.type?.find(type =>
-    type.some(coding => {
-      const isRequiredCode = episodeOfCareTypeCodeSystem.includes(coding.system) && coding.code == '6';
-      if (isRequiredCode) epicCoding = coding;
-      return isRequiredCode;
+    type.coding.some(coding => {
+      const isEpicCoding = episodeOfCareTypeCodeSystem.includes(coding.system) && coding.code == '6';
+
+      if (isEpicCoding) {
+        epicCoding = coding;
+      }
+
+      return isEpicCoding;
     })
   );
 
