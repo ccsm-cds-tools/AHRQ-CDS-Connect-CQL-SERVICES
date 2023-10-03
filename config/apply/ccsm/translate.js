@@ -496,7 +496,7 @@ function mapEpisodeOfCare(episodeOfCare) {
   let pregnancyType, epicCoding;
 
   pregnancyType = episodeOfCare.type?.find(type =>
-    type.coding.some(coding => {
+    type.coding?.some(coding => {
       const isEpicCoding = episodeOfCareTypeCodeSystem.includes(coding.system) && coding.code == '6';
 
       if (isEpicCoding) {
