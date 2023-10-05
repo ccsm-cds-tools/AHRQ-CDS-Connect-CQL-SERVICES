@@ -503,7 +503,7 @@ function mapEpisodeOfCare(episodeOfCare) {
 
   pregnancyType = episodeOfCare.type?.find(type =>
     type.coding?.some(coding => {
-      const isEpicCoding = episodeOfCareTypeCodeSystem.includes(coding.system) && coding.code == '6';
+      const isEpicCoding = episodeOfCareTypeCodeSystem.includes(coding.system) && coding.code === '6';
 
       if (isEpicCoding) {
         epicCoding = coding;
