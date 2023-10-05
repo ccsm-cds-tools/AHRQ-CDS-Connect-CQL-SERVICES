@@ -114,15 +114,10 @@ export function collapseIntoOne(cards, useHtml=false) {
 
     if (episodeOfCareString.length > 0) {
       markdown = markdown + '\n\n' +
-        '### EpisodeOfCare' + '\n\n' +
+        '### Pregnancy EpisodeOfCare' + '\n\n' +
         '* ' + episodeOfCareString + '\n\n';
     }
 
-    if (conditionString.length > 0) {
-      markdown = markdown + '\n\n' +
-        '### Diagnoses' + '\n\n' +
-        '* ' + conditionString + '\n\n';
-    }
     if (conditionString.length > 0) {
       markdown = markdown + '\n\n' +
         '### Diagnoses' + '\n\n' +
