@@ -76,7 +76,7 @@ describe('translateResponse', () => {
     });
 
     it('should skip if resource does not have EpisodeOfCare', () => {
-      let patientDataWithoutEpisodeOfCare = patientData.filter(pd => pd.resourceType != 'EpisodeOfCare');
+      let patientDataWithoutEpisodeOfCare = patientData.filter(pd => pd.resourceType !== 'EpisodeOfCare');
       translateResponse(customApiResponse, patientDataWithoutEpisodeOfCare);
 
       const episodeOfCare = patientDataWithoutEpisodeOfCare.filter(pd => pd.resourceType === 'EpisodeOfCare');
