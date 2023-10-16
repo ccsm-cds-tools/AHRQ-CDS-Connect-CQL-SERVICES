@@ -217,7 +217,7 @@ const customHistologyCodes = {
   },
   'ECT.14005.8': {
     Value: 'ECC Negative',
-    mapping: null
+    mapping: 'Normal'
   },
   'ECT.14005.9': {
     Value: 'ECC Positive',
@@ -291,7 +291,7 @@ const customExcisionCodes = {
 const customEccCodes = {
   'ECT.14015.1': {
     Value: 'Negative',
-    mapping: null
+    mapping: 'Normal'
   },
   'ECT.14015.2': {
     Value: 'LSIL',
