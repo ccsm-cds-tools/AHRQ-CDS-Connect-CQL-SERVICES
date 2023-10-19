@@ -218,8 +218,7 @@ async function call(req, res, next) {
   // (which maps to req.app.locals.altFhirQueries).
   if (req.app.locals.altFhirQueries?.length > 0) {
     const client = getFHIRClient(req, res);
-    let searchRequests = [];
-    req.app.locals.altFhirQueries.forEach(afq => {
+    const searchRequests = req.app.locals.altFhirQueries.map(async afq => {
       console.log('URL template: ', afq);
       const { translateResponse } = res.locals?.apply ? res.locals.apply : { translateResponse(input, _data){return input;} };
       let searchURL = afq;
@@ -234,15 +233,16 @@ async function call(req, res, next) {
       if (patientId) { searchURL = searchURL.split('{{context.patientId}}').join(patientId); }
       console.log('Request context: ', req.body.context);
       console.log('searchURL ', searchURL);
-      const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
-        .then(result => {
-          addDiagnosticReportToBundle(result, bundle, getFHIRClient(req, res));
-          let patientData = bundle.entry.map(b => b.resource);
-          let translated = translateResponse(result, patientData);
-          bundle.entry = translated.map(tr => ({resource: tr}));
-        });
-      searchRequests.push(searchRequest);
+
+      const result = await client.request(searchURL, { pageLimit: 0, flat: true });
+      await addDiagnosticReportToBundle(result, bundle, client);
+
+      let patientData = bundle.entry.map(b => b.resource);
+      let translated = translateResponse(result, patientData);
+
+      bundle.entry = translated.map(tr => ({resource: tr}));
     });
+
     try {
       await Promise.all(searchRequests);
     } catch(err) {
@@ -418,24 +418,23 @@ function getFHIRClient(req, res) {
   }
 }
 
-function addDiagnosticReportToBundle(customApiResponse, bundle, client) {
+async function addDiagnosticReportToBundle(customApiResponse, bundle, client) {
   const orders = customApiResponse.Order ?? [];
-  console.log(`Orders count: ${orders.length}`);
-  orders.forEach(order => {
-    const searchURL = `DiagnosticReport?identifier=${order.OrderId}`;
-    console.log(`Request URL: ${searchURL}`);
-    client.request(searchURL, { pageLimit: 0, flat: true })
+
+  let orderPromises = orders.map(order => {
+    const requestURL = `DiagnosticReport/${order.OrderId}`;
+    console.log(`Request URL: ${requestURL}`);
+    return client.request(requestURL)
       .then(response => {
         if (response == null) {
           console.log('Result is null');
         } else {
-          response.resourceType === 'Bundle' ?
-            console.log(`Result count: ${response.entry.length}`) :
-            console.log(`Result is ${response.resourceType}`);
+          console.log(`Read ${response.id}`);
         }
         addResponseToBundle(response, bundle);
       });
   });
+  await Promise.all(orderPromises);
 }
 
 function addResponseToBundle(response, bundle) {

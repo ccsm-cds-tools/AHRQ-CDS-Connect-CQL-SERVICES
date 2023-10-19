@@ -370,7 +370,10 @@ export function translateResponse(customApiResponse, patientData) {
     const diagnosticReportIndex = patientData.findIndex(pd => {
       return (
         pd.resourceType === 'DiagnosticReport' &&
-        pd.identifier.filter(id => id.value === orderId).length > 0
+        (
+          pd.id === orderId ||
+          pd.identifier.filter(id => id.value === orderId).length > 0
+        )
       );
     });
 
@@ -381,7 +384,7 @@ export function translateResponse(customApiResponse, patientData) {
     if (hpvResults.length > 0) {
       codings.push(standardTestTypeCodes['HPV']);
     }
-    let ExcisionResultsShowAisOrCancer = 
+    let ExcisionResultsShowAisOrCancer =
       excisionResults.some(r => {
         const AisOrCancerCodes = Object.keys(customExcisionCodes);
         return AisOrCancerCodes.includes(r.ID);
