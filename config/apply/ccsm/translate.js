@@ -344,6 +344,20 @@ const procedureMappings = {
   'ECT.14001.8': 'Endocervical Curettage'
 };
 
+// EPIC Code System for EpisodeOfCare Type
+const episodeOfCareTypeCodeSystem = [
+  'urn:oid:1.2.840.114350.1.13.88.2.7.2.726668', // PROD
+  'urn:oid:1.2.840.114350.1.13.88.3.7.2.726668' // BLD & COP
+];
+
+const snomedCtCodeSystem = 'http://snomed.info/sct';
+
+const snomedPregnancyCare = {
+  'system': snomedCtCodeSystem,
+  'code': '424525001',
+  'display': 'Antenatal care (regime/therapy)'
+};
+
 /**
  * Translate the response from the custom API into FHIR and updated the array of patient data
  * @param {Object[]} customApiResponse - Not in FHIR
@@ -378,7 +392,7 @@ export function translateResponse(customApiResponse, patientData) {
     });
 
     let codings = [];
-    if ((papResults.length > 0) || (transformationZone) ){
+    if ((papResults.length > 0) || (transformationZone)) {
       codings.push(standardTestTypeCodes['Cervical Cytology (Pap)']);
     }
     if (hpvResults.length > 0) {
@@ -471,7 +485,44 @@ export function translateResponse(customApiResponse, patientData) {
     }
   });
 
+  translateEpisodeOfCare(patientData);
+
   return patientData;
+}
+
+function translateEpisodeOfCare(patientData) {
+  patientData
+    .filter(resource => resource.resourceType === 'EpisodeOfCare')
+    .forEach(episodeOfCare => mapEpisodeOfCare(episodeOfCare));
+}
+
+/**
+ * If EpisodeOfCare.type has specific Epic Code,
+ * Add SNOMED CT Pregnancy coding to EpisdoeOfCare.type
+ * @param {EpisodeOfCare} episodeOfCare
+ */
+function mapEpisodeOfCare(episodeOfCare) {
+  let pregnancyType, epicCoding;
+
+  pregnancyType = episodeOfCare.type?.find(type =>
+    type.coding?.some(coding => {
+      const isEpicCoding = episodeOfCareTypeCodeSystem.includes(coding.system) && coding.code === '6';
+
+      if (isEpicCoding) {
+        epicCoding = coding;
+      }
+
+      return isEpicCoding;
+    })
+  );
+
+  if (pregnancyType && epicCoding) {
+    pregnancyType.coding.push(snomedPregnancyCare);
+
+    if (!pregnancyType.text) {
+      pregnancyType.text = epicCoding.display;
+    }
+  }
 }
 
 /**

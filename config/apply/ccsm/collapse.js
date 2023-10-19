@@ -2,9 +2,9 @@ import { marked } from 'marked';
 import { getSources } from './formatCards.js';
 
 /**
- * 
- * @param {*} cards 
- * @returns 
+ *
+ * @param {*} cards
+ * @returns
  */
 export function collapseIntoOne(cards, useHtml=false) {
   const summary = 'Cervical Cancer Decision Support';
@@ -36,7 +36,7 @@ export function collapseIntoOne(cards, useHtml=false) {
     let sources = getSources(decisionAids[0]?.extension?.documentation.filter(d => d.label === recommendationGroup));
     console.log(sources);
     // Generate the markdown details
-    let markdown = 
+    let markdown =
       '# ' + recommendation + ' (' + recommendationGroup + ') ' + '\n\n' +
       recommendationDetails.join('\n\n') + '\n\n';
     // Add the markdown to the card
@@ -83,13 +83,14 @@ export function collapseIntoOne(cards, useHtml=false) {
         procedures,
         diagnosticReports,
         encounters,
-        immunizations
+        immunizations,
+        episodeOfCares
       }
     } = details;
 
     let dob = dateOfBirth.value;
-    
-    let markdown = 
+
+    let markdown =
       '# Patient: ' + name + ' (DOB: ' + dob.month + '/' + dob.day + '/' + dob.year + ')';
 
     let conditionString = conditions.map(formatEntry).join('\n* ');
@@ -98,6 +99,7 @@ export function collapseIntoOne(cards, useHtml=false) {
     let reportString = diagnosticReports.map(formatEntry).join('\n* ');
     let procedureString = procedures.map(formatEntry).join('\n* ');
     let immunizationString = immunizations.map(formatEntry).join('\n* ');
+    let episodeOfCareString = episodeOfCares.map(formatEntry).join('\n* ');
 
     if (
       conditions.length > 0 ||
@@ -106,8 +108,15 @@ export function collapseIntoOne(cards, useHtml=false) {
       procedures.length > 0 ||
       diagnosticReports.length > 0 ||
       encounters.length > 0 ||
-      immunizations.length > 0
+      immunizations.length > 0 ||
+      episodeOfCares.length > 0
     ) { markdown = markdown + '\n\n' + '## History' + '\n\n'; }
+
+    if (episodeOfCareString.length > 0) {
+      markdown = markdown + '\n\n' +
+        '### Pregnancy Episode' + '\n\n' +
+        '* ' + episodeOfCareString + '\n\n';
+    }
 
     if (conditionString.length > 0) {
       markdown = markdown + '\n\n' +
@@ -141,8 +150,8 @@ export function collapseIntoOne(cards, useHtml=false) {
     }
 
     let finalDetails = justOneCard[0].detail + '\n\n' + markdown;
-    finalDetails = useHtml ? 
-      '<div style="background-color:white;">' + marked(finalDetails) + '</div>' : 
+    finalDetails = useHtml ?
+      '<div style="background-color:white;">' + marked(finalDetails) + '</div>' :
       finalDetails;
     justOneCard[0].detail = finalDetails;
     if (useHtml) {
