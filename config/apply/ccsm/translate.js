@@ -424,42 +424,47 @@ export function translateResponse(customApiResponse, patientData) {
       conclusionCodes = mapResults(excisionResults, customExcisionCodes, standardHistologyCodes, conclusionCodes);
     }
 
+    let patient = patientData.find(pd => pd.resourceType === 'Patient');
+
     // Create a DiagnosticReport resource from Order
     let newDiagnosticReport = {
-      id: order.OrderId,
-      code: codings,
-      conclusionCode: conclusionCodes,
-      effectiveDateTime: order.ResultDate,
-      status: 'final'
+      'resourceType': 'DiagnosticReport',
+      'id': order.OrderId,
+      'subject': { 'reference': 'Patient/' + patient.id },
+      'code': codings,
+      'conclusionCode': conclusionCodes,
+      'effectiveDateTime': order.ResultDate,
+      'status': 'final'
     }
 
     patientData.push(newDiagnosticReport);
     console.log('DiagnosticReport: ' + newDiagnosticReport.id);
 
       // Create a Procedure resource based on DiagnosticReport
-      if (procedureCoding) {
-        const originalDiagnosticReport = newDiagnosticReport;
-        let newProcedure =
-        {
-          'resourceType': 'Procedure',
-          'id': originalDiagnosticReport.id,
-          'status': 'completed',
-          'code': {
-            'coding': [procedureCoding],
-            'text': procedureText
-          },
-          'performedDateTime': originalDiagnosticReport.effectiveDateTime
-        };
+    if (procedureCoding) {
+      const originalDiagnosticReport = newDiagnosticReport;
+      let newProcedure =
+      {
+        'resourceType': 'Procedure',
+        'id': originalDiagnosticReport.id,
+        'subject': originalDiagnosticReport.subject,
+        'status': 'completed',
+        'code': {
+          'coding': [procedureCoding],
+          'text': procedureText
+        },
+        'performedDateTime': originalDiagnosticReport.effectiveDateTime
+      };
 
-        if (newProcedure.id.length > 54) {
-          newProcedure.id = newProcedure.id.substring(0, 54) + '-procedure';
-        } else {
-          newProcedure.id += '-procedure';
-        }
+      if (newProcedure.id.length > 54) {
+        newProcedure.id = newProcedure.id.substring(0, 54) + '-procedure';
+      } else {
+        newProcedure.id += '-procedure';
+      }
 
-        patientData.push(newProcedure);
+      patientData.push(newProcedure);
 
-        console.log('procedure: ', newProcedure.id);
+      console.log('procedure: ', newProcedure.id);
     }
   });
 
