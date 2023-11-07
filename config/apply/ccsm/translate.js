@@ -435,34 +435,25 @@ export function translateResponse(customApiResponse, patientData) {
       conclusionCodes = mapResults(excisionResults, customExcisionCodes, standardHistologyCodes, conclusionCodes);
     }
 
-    if (diagnosticReportIndex !== -1) {
-      console.log('Found the diagnostic report reference');
-      // Update the DiagnosticReport in patientData with the results from the custom API
-      patientData[diagnosticReportIndex] = {
-        ...patientData[diagnosticReportIndex],
-        code: {
-          coding: [
-            ...patientData[diagnosticReportIndex].code.coding,
-            ...codings
-          ]
-        },
-        conclusionCode: conclusionCodes
-      };
+    // Create a DiagnosticReport resource from Order
+    let newDiagnosticReport = {
+      id: order.OrderId,
+      code: codings,
+      conclusionCode: conclusionCodes,
+      effectiveDateTime: order.ResultDate,
+      status: 'final'
+    }
 
-      console.log('diagnostic report: ', patientData[diagnosticReportIndex]);
-      console.log('dr conclusion codes: ', patientData[diagnosticReportIndex].conclusionCode);
-      patientData[diagnosticReportIndex].conclusionCode.forEach(drcc => {
-        console.log('dr mapped conconclusion code: ', drcc.coding[0], drcc.text);
-      });
+    patientData.push(newDiagnosticReport);
+    console.log('DiagnosticReport: ' + newDiagnosticReport.id);
 
       // Create a Procedure resource based on DiagnosticReport
       if (procedureCoding) {
-        const originalDiagnosticReport = patientData[diagnosticReportIndex];
+        const originalDiagnosticReport = newDiagnosticReport;
         let newProcedure =
         {
           'resourceType': 'Procedure',
           'id': originalDiagnosticReport.id,
-          'subject': originalDiagnosticReport.subject,
           'status': 'completed',
           'code': {
             'coding': [procedureCoding],
@@ -479,9 +470,7 @@ export function translateResponse(customApiResponse, patientData) {
 
         patientData.push(newProcedure);
 
-        console.log('procedure: ', newProcedure);
-        console.log('procedure code: ', procedureCoding);
-      }
+        console.log('procedure: ', newProcedure.id);
     }
   });
 
