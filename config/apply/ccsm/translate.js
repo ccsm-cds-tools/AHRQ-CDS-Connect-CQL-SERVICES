@@ -380,17 +380,6 @@ export function translateResponse(customApiResponse, patientData) {
       EndocervicalCuretageResults: endocervicalCuretageResults
     } = order;
 
-    // Find the DiagnosticReport referenced by this order
-    const diagnosticReportIndex = patientData.findIndex(pd => {
-      return (
-        pd.resourceType === 'DiagnosticReport' &&
-        (
-          pd.id === orderId ||
-          pd.identifier.filter(id => id.value === orderId).length > 0
-        )
-      );
-    });
-
     let codings = [];
     if ((papResults.length > 0) || (transformationZone)) {
       codings.push(standardTestTypeCodes['Cervical Cytology (Pap)']);
