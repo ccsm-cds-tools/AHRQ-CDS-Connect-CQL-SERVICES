@@ -431,7 +431,7 @@ export function translateResponse(customApiResponse, patientData) {
       'resourceType': 'DiagnosticReport',
       'id': order.OrderId,
       'subject': { 'reference': 'Patient/' + patient.id },
-      'code': codings,
+      'code': { 'coding': codings },
       'conclusionCode': conclusionCodes,
       'effectiveDateTime': order.ResultDate,
       'status': 'final'

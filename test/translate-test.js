@@ -12,6 +12,19 @@ describe('translateResponse', () => {
     customApiResponse = JSON.parse(resultContent);
   });
 
+  describe('create diagnostic report', () => {
+    it('should create diangostic report from custom API response', () => {
+      expect(patientData.filter(pd => pd.resourceType === 'DiagnosticReport').length).to.be.equal(0);
+      translateResponse(customApiResponse, patientData);
+      const diagnosticReport = patientData.find(pd => pd.resourceType === 'DiagnosticReport');
+      const order = customApiResponse.Order[0];
+      expect(diagnosticReport).to.not.be.null;
+      expect(diagnosticReport.id).to.equal(order.OrderId);
+      expect(diagnosticReport.status).to.equal('final');
+      expect(diagnosticReport.effectiveDateTime).to.equal(order.ResultDate);
+    });
+  });
+
   describe('parse procedure data', () => {
     it('should include Cervix Excision procedure', function () {
       translateResponse(customApiResponse, patientData);
