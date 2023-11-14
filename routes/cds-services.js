@@ -238,6 +238,7 @@ async function call(req, res, next) {
       console.log('searchURL ', searchURL);
 
       const result = await client.request(searchURL, { pageLimit: 0, flat: true });
+      let patientData = bundle.entry.map(b => b.resource);
       let translated = translateResponse(result, patientData);
 
       bundle.entry = translated.map(tr => ({resource: tr}));
