@@ -216,7 +216,7 @@ async function call(req, res, next) {
   }
   console.timeEnd('CDS Prefetch');
 
-  console.time('Custome API call and data translate')
+  console.time('Custome API call and data translate');
   // Alternative to FHIR queries can also be included via the ALT_FHIR_QUERIES env parameter
   // (which maps to req.app.locals.altFhirQueries).
   if (req.app.locals.altFhirQueries?.length > 0) {
@@ -237,7 +237,6 @@ async function call(req, res, next) {
       console.log('Request context: ', req.body.context);
       console.log('searchURL ', searchURL);
 
-      await client.request(searchURL, { pageLimit: 0, flat: true });
       const result = await client.request(searchURL, { pageLimit: 0, flat: true });
       let translated = translateResponse(result, patientData);
 
@@ -251,7 +250,7 @@ async function call(req, res, next) {
       return;
     }
   }
-  console.timeEnd('Custome API call and data translate')
+  console.timeEnd('Custome API call and data translate');
 
   console.log('--------------------------------------------------');
   console.log('Bundle going into CDS:');
@@ -263,7 +262,7 @@ async function call(req, res, next) {
 
   let cards= [];
 
-  console.time('CQL engine')
+  console.time('CQL engine');
   if (res.locals?.apply) { // $apply a PlanDefinition
 
     // Gather resources
@@ -392,7 +391,7 @@ async function call(req, res, next) {
       cards.push(card);
     }
   }
-  console.timeEnd('CQL engine')
+  console.timeEnd('CQL engine');
 
   res.json({
     cards
