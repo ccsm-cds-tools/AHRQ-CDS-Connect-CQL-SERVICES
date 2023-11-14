@@ -426,21 +426,33 @@ export function translateResponse(customApiResponse, patientData) {
 
     let patient = patientData.find(pd => pd.resourceType === 'Patient');
 
+    const laboratoryCategoryCode = {
+      'coding': [
+        {
+          'system': 'http://terminology.hl7.org/CodeSystem/v2-0074',
+          'code': 'LAB',
+          'display': 'Laboratory'
+        }
+      ],
+      'text': 'Laboratory'
+    };
+
     // Create a DiagnosticReport resource from Order
     let newDiagnosticReport = {
       'resourceType': 'DiagnosticReport',
       'id': orderId,
       'subject': { 'reference': 'Patient/' + patient.id },
+      'category': [laboratoryCategoryCode],
       'code': { 'coding': codings },
       'conclusionCode': conclusionCodes,
       'effectiveDateTime': order.ResultDate,
       'status': 'final'
-    }
+    };
 
     patientData.push(newDiagnosticReport);
     console.log('DiagnosticReport: ' + newDiagnosticReport.id);
 
-      // Create a Procedure resource based on DiagnosticReport
+    // Create a Procedure resource based on DiagnosticReport
     if (procedureCoding) {
       const originalDiagnosticReport = newDiagnosticReport;
       let newProcedure =
