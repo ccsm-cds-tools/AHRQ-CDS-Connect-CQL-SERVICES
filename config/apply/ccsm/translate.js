@@ -429,7 +429,7 @@ export function translateResponse(customApiResponse, patientData) {
     // Create a DiagnosticReport resource from Order
     let newDiagnosticReport = {
       'resourceType': 'DiagnosticReport',
-      'id': order.OrderId,
+      'id': orderId,
       'subject': { 'reference': 'Patient/' + patient.id },
       'code': { 'coding': codings },
       'conclusionCode': conclusionCodes,
