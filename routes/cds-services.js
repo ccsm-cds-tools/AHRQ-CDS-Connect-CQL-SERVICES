@@ -216,7 +216,7 @@ async function call(req, res, next) {
   }
   console.timeEnd('CDS Prefetch');
 
-  console.time('Custome API call and data translate');
+  console.time('Custom API call and data translate');
   // Alternative to FHIR queries can also be included via the ALT_FHIR_QUERIES env parameter
   // (which maps to req.app.locals.altFhirQueries).
   if (req.app.locals.altFhirQueries?.length > 0) {
@@ -251,7 +251,7 @@ async function call(req, res, next) {
       return;
     }
   }
-  console.timeEnd('Custome API call and data translate');
+  console.timeEnd('Custom API call and data translate');
 
   console.log('--------------------------------------------------');
   console.log('Bundle going into CDS:');
