@@ -396,6 +396,11 @@ export function translateResponse(customApiResponse, patientData) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
 
+    // Skip the rest if there is no codings created
+    if (codings.length == 0) {
+      return;
+    }
+
     // Is findingType always provided?
     let procedureText = procedureMappings[findingType?.ID];
     let procedureCoding = standardProcedureCodes[procedureText];
@@ -424,29 +429,28 @@ export function translateResponse(customApiResponse, patientData) {
       conclusionCodes = mapResults(excisionResults, customExcisionCodes, standardHistologyCodes, conclusionCodes);
     }
 
-    let patient = patientData.find(pd => pd.resourceType === 'Patient');
-
-    const laboratoryCategoryCode = {
-      'coding': [
-        {
-          'system': 'http://terminology.hl7.org/CodeSystem/v2-0074',
-          'code': 'LAB',
-          'display': 'Laboratory'
-        }
-      ],
-      'text': 'Laboratory'
-    };
+    const patient = patientData.find(pd => pd.resourceType === 'Patient');
 
     // Create a DiagnosticReport resource from Order
-    let newDiagnosticReport = {
+    const newDiagnosticReport = {
       'resourceType': 'DiagnosticReport',
       'id': orderId,
+      'status': 'final',
       'subject': { 'reference': 'Patient/' + patient.id },
-      'category': [laboratoryCategoryCode],
+      'category': [
+        {
+          'coding': [
+            {
+              'system': 'http://terminology.hl7.org/CodeSystem/v2-0074',
+              'code': 'LAB'
+            }
+          ]
+        }
+      ],
       'code': { 'coding': codings },
       'conclusionCode': conclusionCodes,
       'effectiveDateTime': order.ResultDate,
-      'status': 'final'
+      'issued': order.ResultDate
     };
 
     patientData.push(newDiagnosticReport);
@@ -455,7 +459,7 @@ export function translateResponse(customApiResponse, patientData) {
     // Create a Procedure resource based on DiagnosticReport
     if (procedureCoding) {
       const originalDiagnosticReport = newDiagnosticReport;
-      let newProcedure =
+      const newProcedure =
       {
         'resourceType': 'Procedure',
         'id': originalDiagnosticReport.id,
