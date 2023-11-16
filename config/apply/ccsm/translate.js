@@ -442,11 +442,13 @@ export function translateResponse(customApiResponse, patientData) {
           }
         ],
         'code': { 'coding': codings },
-        'conclusionCode': conclusionCodes,
-        'effectiveDateTime': order.ResultDate,
-        'issued': order.ResultDate
+        'conclusionCode': conclusionCodes
       };
 
+      if (order.ResultDate) {
+        newDiagnosticReport.effectiveDateTime = order.ResultDate;
+        newDiagnosticReport.issued = order.ResultDate;
+      }
 
       patientData.push(newDiagnosticReport);
       console.log('DiagnosticReport: ' + newDiagnosticReport.id);
@@ -471,6 +473,10 @@ export function translateResponse(customApiResponse, patientData) {
         },
         'performedDateTime': order.ResultDate
       };
+
+      if (order.ResultDate) {
+        newProcedure.performedDateTime = order.ResultDate;
+      }
 
       if (newProcedure.id.length > 54) {
         newProcedure.id = newProcedure.id.substring(0, 54) + '-procedure';
