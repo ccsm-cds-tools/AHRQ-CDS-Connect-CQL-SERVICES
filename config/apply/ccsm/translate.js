@@ -368,7 +368,7 @@ export function translateResponse(customApiResponse, patientData) {
   // Translate the orders from the custom API response into FHIR
   const orders = customApiResponse.Order ?? [];
   const patient = patientData.find(pd => pd.resourceType === 'Patient');
-  const patient_reference = { 'reference': 'Patient/' + patient.id }
+  const patient_reference = { 'reference': 'Patient/' + patient.id };
 
   orders.forEach(order => {
     // Unpack the parts of the order we care about
@@ -401,7 +401,7 @@ export function translateResponse(customApiResponse, patientData) {
 
     // Skip add DiagnosticReport if there is no codings created
     if (codings.length > 0) {
-      const conclusionCodes = [];
+      let conclusionCodes = [];
 
       // Map the custom pap results to our standard codes
       conclusionCodes = mapResults(papResults, customCytologyCodes, standardCytologyCodes, conclusionCodes);
@@ -448,8 +448,8 @@ export function translateResponse(customApiResponse, patientData) {
       };
 
 
-        patientData.push(newDiagnosticReport);
-        console.log('DiagnosticReport: ' + newDiagnosticReport.id);
+      patientData.push(newDiagnosticReport);
+      console.log('DiagnosticReport: ' + newDiagnosticReport.id);
     }
 
     // Is findingType always provided?
