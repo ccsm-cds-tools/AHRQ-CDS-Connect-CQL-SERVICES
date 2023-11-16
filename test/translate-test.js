@@ -12,13 +12,37 @@ describe('translateResponse', () => {
     customApiResponse = JSON.parse(resultContent);
   });
 
+  describe('create diagnostic report', () => {
+    it('should create DiagnosticReport from CustomAPI response', () => {
+      expect(patientData.filter(pd => pd.resourceType === 'DiagnosticReport').length).to.be.equal(0);
+      translateResponse(customApiResponse, patientData);
+      const diagnosticReports = patientData.filter(pd => pd.resourceType === 'DiagnosticReport');
+
+      expect(diagnosticReports.length).to.equal(1);
+
+      const diagnosticReport = diagnosticReports[0];
+      const order = customApiResponse.Order[0];
+
+      expect(diagnosticReport.id).to.equal(order.OrderId);
+      expect(diagnosticReport.status).to.equal('final');
+      expect(diagnosticReport.effectiveDateTime).to.equal(order.ResultDate);
+      expect(diagnosticReport.code.coding.length).to.equal(1);
+    });
+
+    it('should not create DiagnosticReport if no mapping from CustomAPI response', () => {
+      customApiResponse.Order[0].PapResults = [];
+      translateResponse(customApiResponse, patientData);
+      const diagnosticReports = patientData.filter(pd => pd.resourceType === 'DiagnosticReport');
+      expect(diagnosticReports).to.be.empty;
+    });
+  });
+
   describe('parse procedure data', () => {
     it('should include Cervix Excision procedure', function () {
       translateResponse(customApiResponse, patientData);
-      expect(patientData.length).to.be.greaterThan(2);
-
       const procedures = patientData.filter(pd => pd.resourceType === 'Procedure');
-      expect(procedures.length).to.be.greaterThan(1);
+
+      expect(procedures).to.not.be.empty;
       expect(procedures.some(p => p.code.coding.some(coding => coding.code === '120038005'))).to.be.true;
     });
   });
@@ -28,7 +52,7 @@ describe('translateResponse', () => {
       translateResponse(customApiResponse, patientData);
       const diagnosticReports = patientData.filter(pd => pd.resourceType === 'DiagnosticReport');
 
-      expect(diagnosticReports.length).to.equal(1);
+      expect(diagnosticReports).to.not.be.empty;
       expect(diagnosticReports.some(p => p.code.coding.some(coding => coding.code === '65753-6'))).to.be.false;
     });
 
@@ -43,7 +67,7 @@ describe('translateResponse', () => {
       translateResponse(customApiResponse, patientData);
       const diagnosticReports = patientData.filter(pd => pd.resourceType === 'DiagnosticReport');
 
-      expect(diagnosticReports.length).to.equal(1);
+      expect(diagnosticReports).to.not.be.empty;
       expect(diagnosticReports.some(p => p.code.coding.some(coding => coding.code === '65753-6'))).to.be.true;
       expect(diagnosticReports.some(p => p.conclusionCode.some(cC => cC.coding.some(coding => coding.code === '254890008')))).to.be.true;
     });
@@ -59,7 +83,7 @@ describe('translateResponse', () => {
       translateResponse(customApiResponse, patientData);
       const diagnosticReports = patientData.filter(pd => pd.resourceType === 'DiagnosticReport');
 
-      expect(diagnosticReports.length).to.equal(1);
+      expect(diagnosticReports).to.not.be.empty;
       expect(diagnosticReports.some(p => p.code.coding.some(coding => coding.code === '65753-6'))).to.be.true;
       expect(diagnosticReports.some(p => p.conclusionCode.some(cC => cC.coding.some(coding => coding.code === '363354003')))).to.be.true;
     });
@@ -70,6 +94,7 @@ describe('translateResponse', () => {
       translateResponse(customApiResponse, patientData);
 
       const episodeOfCare = patientData.filter(pd => pd.resourceType === 'EpisodeOfCare');
+
       expect(episodeOfCare).to.not.be.empty;
       expect(episodeOfCare.some(p => p.type.some(type => type.coding.some(coding => coding.code === '424525001' && coding.system === 'http://snomed.info/sct')))).to.be.true;
       expect(episodeOfCare.some(p => p.type.some(type => type.text === 'PREGNANCY'))).to.be.true;

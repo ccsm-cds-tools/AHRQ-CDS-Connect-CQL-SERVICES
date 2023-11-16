@@ -1,8 +1,6 @@
 export const prefetch = {
   'Patient': 'Patient/{{context.patientId}}',
-  'ConditionProblem': 'Condition?patient={{context.patientId}}&category=problem-list-item&clinical-status=active',
-  'ConditionMedicalHistory': 'Condition?patient={{context.patientId}}&category=medical-history&clinical-status=active',
-  'ProcedureOrders': 'Procedure?patient={{context.patientId}}&category=103693007',
-  'ProcedureSurgerical': 'Procedure?patient={{context.patientId}}&category=387713003',
+  'Condition': 'Condition?patient={{context.patientId}}&category=problem-list-item,medical-history&clinical-status=active',
+  'Procedure': 'Procedure?patient={{context.patientId}}&category=103693007,387713003',
   'Encounter': 'Encounter/{{context.encounterId}}',
 };

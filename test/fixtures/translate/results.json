@@ -10,7 +10,12 @@
                 "ID": "ECT.14001.5",
                 "Value": "Excision"
             },
-            "PapResults": [],
+            "PapResults": [
+                {
+                    "ID": "ECT.14009.1",
+                    "Value": "NILM"
+                }
+            ],
             "TrackingStatus": null,
             "FollowUpActions": [],
             "ExcisionTypes": [],

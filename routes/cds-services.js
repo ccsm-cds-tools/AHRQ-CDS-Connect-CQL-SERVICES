@@ -177,6 +177,7 @@ async function call(req, res, next) {
   // console.log(hook);
   // console.log(req);
   // console.log(res);
+  console.time('CDS Prefetch');
   if (hook.prefetch) {
     // Create a FHIR client in case we need to call out to the FHIR server
     const client = getFHIRClient(req, res);
@@ -213,7 +214,9 @@ async function call(req, res, next) {
       return;
     }
   }
+  console.timeEnd('CDS Prefetch');
 
+  console.time('Custom API call and data translate');
   // Alternative to FHIR queries can also be included via the ALT_FHIR_QUERIES env parameter
   // (which maps to req.app.locals.altFhirQueries).
   if (req.app.locals.altFhirQueries?.length > 0) {
@@ -235,8 +238,6 @@ async function call(req, res, next) {
       console.log('searchURL ', searchURL);
 
       const result = await client.request(searchURL, { pageLimit: 0, flat: true });
-      await addDiagnosticReportToBundle(result, bundle, client);
-
       let patientData = bundle.entry.map(b => b.resource);
       let translated = translateResponse(result, patientData);
 
@@ -250,6 +251,7 @@ async function call(req, res, next) {
       return;
     }
   }
+  console.timeEnd('Custom API call and data translate');
 
   console.log('--------------------------------------------------');
   console.log('Bundle going into CDS:');
@@ -260,6 +262,8 @@ async function call(req, res, next) {
   });
 
   let cards= [];
+
+  console.time('CQL engine');
   if (res.locals?.apply) { // $apply a PlanDefinition
 
     // Gather resources
@@ -388,6 +392,7 @@ async function call(req, res, next) {
       cards.push(card);
     }
   }
+  console.timeEnd('CQL engine');
 
   res.json({
     cards
@@ -416,25 +421,6 @@ function getFHIRClient(req, res) {
     }
     return fhirclient(req, res).client(state);
   }
-}
-
-async function addDiagnosticReportToBundle(customApiResponse, bundle, client) {
-  const orders = customApiResponse.Order ?? [];
-
-  let orderPromises = orders.map(order => {
-    const requestURL = `DiagnosticReport/${order.OrderId}`;
-    console.log(`Request URL: ${requestURL}`);
-    return client.request(requestURL)
-      .then(response => {
-        if (response == null) {
-          console.log('Result is null');
-        } else {
-          console.log(`Read ${response.id}`);
-        }
-        addResponseToBundle(response, bundle);
-      });
-  });
-  await Promise.all(orderPromises);
 }
 
 function addResponseToBundle(response, bundle) {

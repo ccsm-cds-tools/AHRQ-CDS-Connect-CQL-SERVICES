@@ -367,6 +367,9 @@ const snomedPregnancyCare = {
 export function translateResponse(customApiResponse, patientData) {
   // Translate the orders from the custom API response into FHIR
   const orders = customApiResponse.Order ?? [];
+  const patient = patientData.find(pd => pd.resourceType === 'Patient');
+  const patient_reference = { 'reference': 'Patient/' + patient.id };
+
   orders.forEach(order => {
     // Unpack the parts of the order we care about
     const {
@@ -379,17 +382,6 @@ export function translateResponse(customApiResponse, patientData) {
       ExcisionResults: excisionResults,
       EndocervicalCuretageResults: endocervicalCuretageResults
     } = order;
-
-    // Find the DiagnosticReport referenced by this order
-    const diagnosticReportIndex = patientData.findIndex(pd => {
-      return (
-        pd.resourceType === 'DiagnosticReport' &&
-        (
-          pd.id === orderId ||
-          pd.identifier.filter(id => id.value === orderId).length > 0
-        )
-      );
-    });
 
     let codings = [];
     if ((papResults.length > 0) || (transformationZone)) {
@@ -407,81 +399,88 @@ export function translateResponse(customApiResponse, patientData) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
 
-    // Is findingType always provided?
-    let procedureText = procedureMappings[findingType?.ID];
-    let procedureCoding = standardProcedureCodes[procedureText];
+    // Skip add DiagnosticReport if there is no codings created
+    if (codings.length > 0) {
+      let conclusionCodes = [];
 
-    let conclusionCodes = [];
+      // Map the custom pap results to our standard codes
+      conclusionCodes = mapResults(papResults, customCytologyCodes, standardCytologyCodes, conclusionCodes);
 
-    // Map the custom pap results to our standard codes
-    conclusionCodes = mapResults(papResults, customCytologyCodes, standardCytologyCodes, conclusionCodes);
+      // Map the custom transformation zone results to our standard codes
+      if (transformationZone) {
+        const transformationZoneArray = [transformationZone];
+        conclusionCodes = mapResults(transformationZoneArray, customCytologyCodes, standardCytologyCodes, conclusionCodes);
+      }
+      // Map the custom HPV results to our standard codes
+      conclusionCodes = mapResults(hpvResults, customHpvCodes, standardHpvCodes, conclusionCodes);
 
-    // Map the custom transformation zone results to our standard codes
-    if (transformationZone) {
-      const transformationZoneArray = [transformationZone];
-      conclusionCodes = mapResults(transformationZoneArray, customCytologyCodes, standardCytologyCodes, conclusionCodes);
-    }
-    // Map the custom HPV results to our standard codes
-    conclusionCodes = mapResults(hpvResults, customHpvCodes, standardHpvCodes, conclusionCodes);
+      // Map the custom histology results to our standard codes
+      conclusionCodes = mapResults(colposcopyResults, customHistologyCodes, standardHistologyCodes, conclusionCodes);
 
-    // Map the custom histology results to our standard codes
-    conclusionCodes = mapResults(colposcopyResults, customHistologyCodes, standardHistologyCodes, conclusionCodes);
+      // Map the custom ECC results to our standard codes
+      conclusionCodes = mapResults(endocervicalCuretageResults, customEccCodes, standardHistologyCodes, conclusionCodes);
 
-    // Map the custom ECC results to our standard codes
-    conclusionCodes = mapResults(endocervicalCuretageResults, customEccCodes, standardHistologyCodes, conclusionCodes);
+      // Map the custom excision results to our standard codes
+      if (ExcisionResultsShowAisOrCancer) {
+        conclusionCodes = mapResults(excisionResults, customExcisionCodes, standardHistologyCodes, conclusionCodes);
+      }
 
-    // Map the custom excision results to our standard codes
-    if (ExcisionResultsShowAisOrCancer) {
-      conclusionCodes = mapResults(excisionResults, customExcisionCodes, standardHistologyCodes, conclusionCodes);
-    }
-
-    if (diagnosticReportIndex !== -1) {
-      console.log('Found the diagnostic report reference');
-      // Update the DiagnosticReport in patientData with the results from the custom API
-      patientData[diagnosticReportIndex] = {
-        ...patientData[diagnosticReportIndex],
-        code: {
-          coding: [
-            ...patientData[diagnosticReportIndex].code.coding,
-            ...codings
-          ]
-        },
-        conclusionCode: conclusionCodes
+      // Create a DiagnosticReport resource from Order
+      const newDiagnosticReport = {
+        'resourceType': 'DiagnosticReport',
+        'id': orderId,
+        'status': 'final',
+        'subject': patient_reference,
+        'category': [
+          {
+            'coding': [
+              {
+                'system': 'http://terminology.hl7.org/CodeSystem/v2-0074',
+                'code': 'LAB'
+              }
+            ]
+          }
+        ],
+        'code': { 'coding': codings },
+        'conclusionCode': conclusionCodes,
+        'effectiveDateTime': order.ResultDate,
+        'issued': order.ResultDate
       };
 
-      console.log('diagnostic report: ', patientData[diagnosticReportIndex]);
-      console.log('dr conclusion codes: ', patientData[diagnosticReportIndex].conclusionCode);
-      patientData[diagnosticReportIndex].conclusionCode.forEach(drcc => {
-        console.log('dr mapped conconclusion code: ', drcc.coding[0], drcc.text);
-      });
 
-      // Create a Procedure resource based on DiagnosticReport
-      if (procedureCoding) {
-        const originalDiagnosticReport = patientData[diagnosticReportIndex];
-        let newProcedure =
-        {
-          'resourceType': 'Procedure',
-          'id': originalDiagnosticReport.id,
-          'subject': originalDiagnosticReport.subject,
-          'status': 'completed',
-          'code': {
-            'coding': [procedureCoding],
-            'text': procedureText
-          },
-          'performedDateTime': originalDiagnosticReport.effectiveDateTime
-        };
+      patientData.push(newDiagnosticReport);
+      console.log('DiagnosticReport: ' + newDiagnosticReport.id);
+    }
 
-        if (newProcedure.id.length > 54) {
-          newProcedure.id = newProcedure.id.substring(0, 54) + '-procedure';
-        } else {
-          newProcedure.id += '-procedure';
-        }
+    // Is findingType always provided?
+    const procedureText = procedureMappings[findingType?.ID];
+    const procedureCoding = standardProcedureCodes[procedureText];
 
-        patientData.push(newProcedure);
 
-        console.log('procedure: ', newProcedure);
-        console.log('procedure code: ', procedureCoding);
+    // Create a Procedure resource based on DiagnosticReport
+    if (procedureCoding) {
+      const newProcedure =
+      {
+        'resourceType': 'Procedure',
+        'id': orderId,
+        'subject': patient_reference,
+        'status': 'completed',
+        'code': {
+          'coding': [procedureCoding],
+          'text': procedureText
+        },
+        'performedDateTime': order.ResultDate
+      };
+
+      if (newProcedure.id.length > 54) {
+        newProcedure.id = newProcedure.id.substring(0, 54) + '-procedure';
+      } else {
+        newProcedure.id += '-procedure';
       }
+
+      patientData.push(newProcedure);
+
+      console.log('procedure: ', newProcedure.id);
     }
   });
 
