@@ -367,6 +367,9 @@ const snomedPregnancyCare = {
 export function translateResponse(customApiResponse, patientData) {
   // Translate the orders from the custom API response into FHIR
   const orders = customApiResponse.Order ?? [];
+  const patient = patientData.find(pd => pd.resourceType === 'Patient');
+  const patient_reference = { 'reference': 'Patient/' + patient.id }
+
   orders.forEach(order => {
     // Unpack the parts of the order we care about
     const {
@@ -396,80 +399,77 @@ export function translateResponse(customApiResponse, patientData) {
       codings.push(standardTestTypeCodes['Cervical Histology']);
     }
 
-    // Skip the rest if there is no codings created
-    if (codings.length == 0) {
-      return;
+    // Skip add DiagnosticReport if there is no codings created
+    if (codings.length > 0) {
+      const conclusionCodes = [];
+
+      // Map the custom pap results to our standard codes
+      conclusionCodes = mapResults(papResults, customCytologyCodes, standardCytologyCodes, conclusionCodes);
+
+      // Map the custom transformation zone results to our standard codes
+      if (transformationZone) {
+        const transformationZoneArray = [transformationZone];
+        conclusionCodes = mapResults(transformationZoneArray, customCytologyCodes, standardCytologyCodes, conclusionCodes);
+      }
+      // Map the custom HPV results to our standard codes
+      conclusionCodes = mapResults(hpvResults, customHpvCodes, standardHpvCodes, conclusionCodes);
+
+      // Map the custom histology results to our standard codes
+      conclusionCodes = mapResults(colposcopyResults, customHistologyCodes, standardHistologyCodes, conclusionCodes);
+
+      // Map the custom ECC results to our standard codes
+      conclusionCodes = mapResults(endocervicalCuretageResults, customEccCodes, standardHistologyCodes, conclusionCodes);
+
+      // Map the custom excision results to our standard codes
+      if (ExcisionResultsShowAisOrCancer) {
+        conclusionCodes = mapResults(excisionResults, customExcisionCodes, standardHistologyCodes, conclusionCodes);
+      }
+
+      // Create a DiagnosticReport resource from Order
+      const newDiagnosticReport = {
+        'resourceType': 'DiagnosticReport',
+        'id': orderId,
+        'status': 'final',
+        'subject': patient_reference,
+        'category': [
+          {
+            'coding': [
+              {
+                'system': 'http://terminology.hl7.org/CodeSystem/v2-0074',
+                'code': 'LAB'
+              }
+            ]
+          }
+        ],
+        'code': { 'coding': codings },
+        'conclusionCode': conclusionCodes,
+        'effectiveDateTime': order.ResultDate,
+        'issued': order.ResultDate
+      };
+
+
+        patientData.push(newDiagnosticReport);
+        console.log('DiagnosticReport: ' + newDiagnosticReport.id);
     }
 
     // Is findingType always provided?
-    let procedureText = procedureMappings[findingType?.ID];
-    let procedureCoding = standardProcedureCodes[procedureText];
+    const procedureText = procedureMappings[findingType?.ID];
+    const procedureCoding = standardProcedureCodes[procedureText];
 
-    let conclusionCodes = [];
-
-    // Map the custom pap results to our standard codes
-    conclusionCodes = mapResults(papResults, customCytologyCodes, standardCytologyCodes, conclusionCodes);
-
-    // Map the custom transformation zone results to our standard codes
-    if (transformationZone) {
-      const transformationZoneArray = [transformationZone];
-      conclusionCodes = mapResults(transformationZoneArray, customCytologyCodes, standardCytologyCodes, conclusionCodes);
-    }
-    // Map the custom HPV results to our standard codes
-    conclusionCodes = mapResults(hpvResults, customHpvCodes, standardHpvCodes, conclusionCodes);
-
-    // Map the custom histology results to our standard codes
-    conclusionCodes = mapResults(colposcopyResults, customHistologyCodes, standardHistologyCodes, conclusionCodes);
-
-    // Map the custom ECC results to our standard codes
-    conclusionCodes = mapResults(endocervicalCuretageResults, customEccCodes, standardHistologyCodes, conclusionCodes);
-
-    // Map the custom excision results to our standard codes
-    if (ExcisionResultsShowAisOrCancer) {
-      conclusionCodes = mapResults(excisionResults, customExcisionCodes, standardHistologyCodes, conclusionCodes);
-    }
-
-    const patient = patientData.find(pd => pd.resourceType === 'Patient');
-
-    // Create a DiagnosticReport resource from Order
-    const newDiagnosticReport = {
-      'resourceType': 'DiagnosticReport',
-      'id': orderId,
-      'status': 'final',
-      'subject': { 'reference': 'Patient/' + patient.id },
-      'category': [
-        {
-          'coding': [
-            {
-              'system': 'http://terminology.hl7.org/CodeSystem/v2-0074',
-              'code': 'LAB'
-            }
-          ]
-        }
-      ],
-      'code': { 'coding': codings },
-      'conclusionCode': conclusionCodes,
-      'effectiveDateTime': order.ResultDate,
-      'issued': order.ResultDate
-    };
-
-    patientData.push(newDiagnosticReport);
-    console.log('DiagnosticReport: ' + newDiagnosticReport.id);
 
     // Create a Procedure resource based on DiagnosticReport
     if (procedureCoding) {
-      const originalDiagnosticReport = newDiagnosticReport;
       const newProcedure =
       {
         'resourceType': 'Procedure',
-        'id': originalDiagnosticReport.id,
-        'subject': originalDiagnosticReport.subject,
+        'id': orderId,
+        'subject': patient_reference,
         'status': 'completed',
         'code': {
           'coding': [procedureCoding],
           'text': procedureText
         },
-        'performedDateTime': originalDiagnosticReport.effectiveDateTime
+        'performedDateTime': order.ResultDate
       };
 
       if (newProcedure.id.length > 54) {
