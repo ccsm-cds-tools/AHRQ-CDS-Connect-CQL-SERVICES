@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { marked } from 'marked';
 import { getSources } from './formatCards.js';
 
@@ -34,6 +35,7 @@ export function collapseIntoOne(cards, useHtml=false) {
       riskTable
     } = details;
     let sources = getSources(decisionAids[0]?.extension?.documentation.filter(d => d.label === recommendationGroup));
+    console.log('Sources:');
     console.log(sources);
     // Generate the markdown details
     let markdown =

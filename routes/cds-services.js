@@ -146,6 +146,7 @@ function valuesetter(req, res, next) {
  * @see {@link https://cds-hooks.org/specification/1.0/#calling-a-cds-service|Calling a CDS Service}
  */
 async function call(req, res, next) {
+  console.time('Total processing time');
   const hook = res.locals.hook;
   if (res.locals.apply) { hook.prefetch = res.locals.apply.prefetch; }
 
@@ -197,10 +198,12 @@ async function call(req, res, next) {
           searchURL = searchURL.split(`{{context.${contextKey}}}`).join(req.body.context[contextKey]);
         });
         // Perform the search and add the response to the bundle
+        console.time('FHIR Server Request: ' + searchURL);
         const searchRequest = client.request(searchURL, { pageLimit: 0, flat: true })
           .then(result => addResponseToBundle(result, bundle));
         // Push the promise onto the array so we can await it later
         searchRequests.push(searchRequest);
+        console.timeEnd('FHIR Server Request: ' + searchURL);
       } else {
         // The prefetch was supplied so just add it directly to the bundle
         addResponseToBundle(pf, bundle);
@@ -236,12 +239,15 @@ async function call(req, res, next) {
       if (patientId) { searchURL = searchURL.split('{{context.patientId}}').join(patientId); }
       console.log('Request context: ', req.body.context);
       console.log('searchURL ', searchURL);
-
+      console.time('Custom API call');
       const result = await client.request(searchURL, { pageLimit: 0, flat: true });
+      console.timeEnd('Custom API call');
+      console.time('Data translate');
       let patientData = bundle.entry.map(b => b.resource);
       let translated = translateResponse(result, patientData);
 
       bundle.entry = translated.map(tr => ({resource: tr}));
+      console.timeEnd('Data translate');
     });
 
     try {
@@ -278,17 +284,22 @@ async function call(req, res, next) {
       elmJsonDependencies: elmJson,
       valueSetJson
     };
+    console.time('Apply operation');
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
-
+    console.timeEnd('Apply operation');
     // If RequestGroup has actions, convert them to properly-formatted CDS Hooks cards
     if (RequestGroup?.action) {
+      console.time('Format cards');
       // Pass action array into extractCards recursive function
       let newCards = formatCards(RequestGroup.action, otherResources).flat();
       cards.push(...newCards);
+      console.timeEnd('Format cards');
     }
 
     if (res.app.locals.collapseCards) {
+      console.time('Collapse cards');
       cards = collapseIntoOne(cards, req.app.locals.useHtml ?? false);
+      console.timeEnd('Collapse cards');
     }
 
     console.log('--------------------------------------------------');
@@ -303,7 +314,7 @@ async function call(req, res, next) {
     console.log();
 
   } else { // Evaluate CQL expressions (not tied to any PlanDefinition)
-
+    console.time('Evaluate CQL expressions not tied to any PlanDefinition');
     // Get the lib from the res.locals (thanks, middleware!)
     const lib = res.locals.library;
 
@@ -391,12 +402,14 @@ async function call(req, res, next) {
 
       cards.push(card);
     }
+    console.timeEnd('Evaluate CQL expressions not tied to any PlanDefinition');
   }
   console.timeEnd('CQL engine');
 
   res.json({
     cards
   });
+  console.timeEnd('Total processing time');
 }
 
 function getFHIRClient(req, res) {
