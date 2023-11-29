@@ -239,6 +239,7 @@ async function call(req, res, next) {
       if (patientId) { searchURL = searchURL.split('{{context.patientId}}').join(patientId); }
       console.log('Request context: ', req.body.context);
       console.log('searchURL ', searchURL);
+
       console.time('Custom API call');
       const result = await client.request(searchURL, { pageLimit: 0, flat: true });
       console.timeEnd('Custom API call');
@@ -287,6 +288,7 @@ async function call(req, res, next) {
     console.time('Apply operation');
     const [RequestGroup, ...otherResources] = await applyAndMerge(planDefinition, patientReference, resolver, aux);
     console.timeEnd('Apply operation');
+
     // If RequestGroup has actions, convert them to properly-formatted CDS Hooks cards
     if (RequestGroup?.action) {
       console.time('Format cards');
@@ -315,6 +317,7 @@ async function call(req, res, next) {
 
   } else { // Evaluate CQL expressions (not tied to any PlanDefinition)
     console.time('Evaluate CQL expressions not tied to any PlanDefinition');
+
     // Get the lib from the res.locals (thanks, middleware!)
     const lib = res.locals.library;
 
