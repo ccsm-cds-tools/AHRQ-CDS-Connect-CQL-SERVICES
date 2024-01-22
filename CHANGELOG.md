@@ -1,3 +1,9 @@
-# 3.0.1
+# Changelog
 
-Update encender dependency to 0.7.1
+## 3.0.1
+
+Update `encender` dependency to 0.7.1
+
+## 3.0.2
+
+Update `ccsm-cds-with-tests` dependency to 0.4.14
