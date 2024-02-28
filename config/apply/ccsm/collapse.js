@@ -90,10 +90,17 @@ export function collapseIntoOne(cards, useHtml=false) {
       }
     } = details;
 
-    let dob = dateOfBirth.value;
-
-    let markdown =
-      '# Patient: ' + name + ' (DOB: ' + dob.month + '/' + dob.day + '/' + dob.year + ')';
+    let markdown = 
+      (
+        conditions.length > 0 ||
+        observations.length > 0 ||
+        medications.length > 0 ||
+        procedures.length > 0 ||
+        diagnosticReports.length > 0 ||
+        encounters.length > 0 ||
+        immunizations.length > 0 ||
+        episodeOfCares.length > 0
+      ) ? '## Patient History:' : '## Patient History:\n\nNo relevant patient history';
 
     let conditionString = conditions.map(formatEntry).join('\n* ');
     let observationString = observations.map(formatEntry).join('\n* ');
@@ -103,16 +110,6 @@ export function collapseIntoOne(cards, useHtml=false) {
     let immunizationString = immunizations.map(formatEntry).join('\n* ');
     let episodeOfCareString = episodeOfCares.map(formatEntry).join('\n* ');
 
-    if (
-      conditions.length > 0 ||
-      observations.length > 0 ||
-      medications.length > 0 ||
-      procedures.length > 0 ||
-      diagnosticReports.length > 0 ||
-      encounters.length > 0 ||
-      immunizations.length > 0 ||
-      episodeOfCares.length > 0
-    ) { markdown = markdown + '\n\n' + '## History' + '\n\n'; }
 
     if (episodeOfCareString.length > 0) {
       markdown = markdown + '\n\n' +
