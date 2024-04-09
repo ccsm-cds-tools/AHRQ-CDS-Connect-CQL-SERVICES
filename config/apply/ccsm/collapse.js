@@ -44,7 +44,7 @@ export function collapseIntoOne(cards, useHtml=false) {
       '# ' + recommendation + '\n\n' +
       mainRecommendation + '\n\n' +
       recommendationDetails.slice(1).join('\n\n') + '\n\n';
-    group = "**Reference**: " + recommendationGroup + "\n";
+    group = '**Reference**: ' + recommendationGroup + '\n';
 
     // Add the markdown to the card
     justOneCard = [{
