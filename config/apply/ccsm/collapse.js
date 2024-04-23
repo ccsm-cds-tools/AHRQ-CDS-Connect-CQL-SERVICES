@@ -43,7 +43,7 @@ export function collapseIntoOne(cards, useHtml=false) {
       '# ' + recommendation + '\n\n' +
       '**' + recommendationDetails[0] + '**\n\n' +
       recommendationDetails.slice(1).join('\n\n') + '\n\n';
-    group = "**Reference**: " + recommendationGroup + "\n";
+    group = '**Reference**: ' + recommendationGroup + '\n';
 
     // Add the markdown to the card
     justOneCard = [{
@@ -162,7 +162,7 @@ const table = pug.compile(
   '\t\t\ttd(style={"border-bottom":"1px solid #eee","padding":"5px 20px 5px 0","width":"8em"}) #{val.date ? dayjs(val.date).format("MM/DD/YYYY") : "Date Unknown"}\n' +
   '\t\t\ttd(style={"border-bottom":"1px solid #eee","padding":"5px 20px 5px 0","width":"14em"}) #{val.name}\n' +
   '\t\t\ttd(style={"border-bottom":"1px solid #eee","padding":"5px 20px 5px 0"}) #{val.value || "n/a"}'
-)
+);
   
 function formatEntry(ent) {
   return table({history:ent,dayjs:dayjs});
