@@ -39,10 +39,9 @@ export function collapseIntoOne(cards, useHtml=false) {
     let sources = getSources(decisionAids[0]?.extension?.documentation.filter(d => d.label === recommendationGroup));
     // Generate the markdown details
     // The first item of the recommendation details array is the 'main' part of the recommendation; display in bold
-    let mainRecommendation = '**' + recommendationDetails[0] + '**';
     let markdown =
       '# ' + recommendation + '\n\n' +
-      mainRecommendation + '\n\n' +
+      '**' + recommendationDetails[0] + '**\n\n' +
       recommendationDetails.slice(1).join('\n\n') + '\n\n';
     group = "**Reference**: " + recommendationGroup + "\n";
 
@@ -160,7 +159,7 @@ const table = pug.compile(
   'table(style={"border-spacing":"0"})\n'+
   '\teach val in history\n' +
   '\t\ttr\n'+
-  '\t\t\ttd(style={"border-bottom":"1px solid #eee","padding":"5px 20px 5px 0","width":"8em"}) #{val.date ? dayjs(val.date).format("MM/DD/YYYY") : "n/a"}\n' +
+  '\t\t\ttd(style={"border-bottom":"1px solid #eee","padding":"5px 20px 5px 0","width":"8em"}) #{val.date ? dayjs(val.date).format("MM/DD/YYYY") : "Date Unknown"}\n' +
   '\t\t\ttd(style={"border-bottom":"1px solid #eee","padding":"5px 20px 5px 0","width":"14em"}) #{val.name}\n' +
   '\t\t\ttd(style={"border-bottom":"1px solid #eee","padding":"5px 20px 5px 0"}) #{val.value || "n/a"}'
 )
