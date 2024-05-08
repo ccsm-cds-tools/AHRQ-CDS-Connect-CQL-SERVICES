@@ -11,3 +11,8 @@ Update `ccsm-cds-with-tests` dependency to 0.4.14
 ## 3.0.3
 
 Update `ccsm-cds-with-tests` dependency to 0.4.15
+
+## 3.0.4
+
+Begin work on re-formatting CDS Hooks cards (#36)
+Update `ccsm-cds-with-tests` dependency to 0.4.16
