@@ -40,7 +40,7 @@ export function collapseIntoOne(cards, useHtml=false) {
     // Generate the markdown details
     // The first item of the recommendation details array is the 'main' part of the recommendation; display in bold
     let markdown =
-      '# ' + recommendation + '\n\n' +
+      '# Recommendation: ' + recommendation + '\n\n' +
       '## ' + recommendationDetails[0] + '\n\n' +
       recommendationDetails.slice(1).join('\n\n') + '\n\n\n';
     group = '**Reference**: ' + recommendationGroup + '\n';
