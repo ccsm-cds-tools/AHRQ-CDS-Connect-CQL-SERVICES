@@ -40,9 +40,9 @@ export function collapseIntoOne(cards, useHtml=false) {
     // Generate the markdown details
     // The first item of the recommendation details array is the 'main' part of the recommendation; display in bold
     let markdown =
-      '# ' + recommendation + '\n\n' +
-      '**' + recommendationDetails[0] + '**\n\n' +
-      recommendationDetails.slice(1).join('\n\n') + '\n\n';
+      '# Recommendation: ' + recommendation + '\n\n' +
+      '## ' + recommendationDetails[0] + '\n\n' +
+      recommendationDetails.slice(1).join('\n\n') + '\n\n\n';
     group = '**Reference**: ' + recommendationGroup + '\n';
 
     // Add the markdown to the card
@@ -156,7 +156,7 @@ export function collapseIntoOne(cards, useHtml=false) {
 }
 
 const table = pug.compile(
-  'table(style={"border-spacing":"0"})\n'+
+  'table(style={"border-spacing":"0","margin-bottom":"10px","margin-top":"5px"})\n'+
   '\teach val in history\n' +
   '\t\ttr\n'+
   '\t\t\ttd(style={"border-bottom":"1px solid #eee","padding":"5px 20px 5px 0","width":"8em"}) #{val.date ? dayjs(val.date).format("MM/DD/YYYY") : "Date Unknown"}\n' +
