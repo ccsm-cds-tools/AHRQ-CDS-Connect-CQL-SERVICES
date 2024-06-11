@@ -16,3 +16,7 @@ Update `ccsm-cds-with-tests` dependency to 0.4.15
 
 Begin work on re-formatting CDS Hooks cards (#36)
 Update `ccsm-cds-with-tests` dependency to 0.4.16
+
+## 3.0.5
+
+Update bpa card spacing (#38)
