@@ -35,6 +35,40 @@ describe('translateResponse', () => {
       const diagnosticReports = patientData.filter(pd => pd.resourceType === 'DiagnosticReport');
       expect(diagnosticReports).to.be.empty;
     });
+
+    it('should create and AGC-FN DiagnosticReport from CustomAPI response', () => {
+      expect(patientData.filter(pd => pd.resourceType === 'DiagnosticReport').length).to.be.equal(0);
+
+      customApiResponse.Order[0].FindingType =
+      {
+        'ID': 'ECT.14001.1',
+        'Value': 'Pap Smear'
+      };
+
+      customApiResponse.Order[0].PapResults =
+      [
+        {
+          ID: 'ECT.14009.10001',
+          Value: 'AGC-Endocervical'
+        }
+      ];
+
+      translateResponse(customApiResponse, patientData);
+      const diagnosticReports = patientData.filter(pd => pd.resourceType === 'DiagnosticReport');
+
+      expect(diagnosticReports.length).to.equal(1);
+
+      const diagnosticReport = diagnosticReports[0];
+      const order = customApiResponse.Order[0];
+      console.log(JSON.stringify(diagnosticReport, null, 2));
+
+      expect(diagnosticReport.id).to.equal(order.OrderId);
+      expect(diagnosticReport.status).to.equal('final');
+      expect(diagnosticReport.effectiveDateTime).to.equal(order.ResultDate);
+      expect(diagnosticReport.code.coding.length).to.equal(1);
+    });
+
+
   });
 
   describe('parse procedure data', () => {
