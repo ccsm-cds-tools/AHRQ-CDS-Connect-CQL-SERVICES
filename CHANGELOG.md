@@ -20,3 +20,8 @@ Update `ccsm-cds-with-tests` dependency to 0.4.16
 ## 3.0.5
 
 Update bpa card spacing (#38)
+
+## 3.1.0
+
+Update CQL execution dependencies to leverage performance enhancements
+Update `ccsm-cds-with-tests` dependency to 0.4.19
