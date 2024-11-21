@@ -29,7 +29,7 @@
     "cql-execution": "github:cqframework/cql-execution#cache_function_ref",
     "dayjs": "^1.11.10",
     "debug": "~2.6.0",
-    "encender": "^0.7.1",
+    "encender": "github:ccsm-cds-tools/encender#cql-execution",
     "express": "^4.17.3",
     "fhirclient": "^2.4.0",
     "helmet": "^4.6.0",
