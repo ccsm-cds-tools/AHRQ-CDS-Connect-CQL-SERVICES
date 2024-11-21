@@ -24,7 +24,7 @@
     "commander": "^2.20.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "cql-exec-fhir": "^2.1.4",
+    "cql-exec-fhir": "github:ccsm-cds-tools/cql-exec-fhir#memoize-to-fhir-object",
     "cql-exec-vsac": "^2.0.1",
     "cql-execution": "^3.0.1",
     "dayjs": "^1.11.10",
